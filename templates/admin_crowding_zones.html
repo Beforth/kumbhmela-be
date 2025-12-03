@@ -272,6 +272,64 @@
       border-radius: 999px;
     }
 
+    .map-mode-toggle {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      z-index: 1000;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .map-mode-toggle-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 2px solid #e5e7eb;
+      border-style: dashed;
+    }
+
+    .map-mode-toggle::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 40px;
+      bottom: 50%;
+      transform: translateY(50%);
+      white-space: nowrap;
+      background: rgba(15, 23, 42, 0.95);
+      color: #e5e7eb;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .map-mode-toggle:hover::after {
+      opacity: 1;
+    }
+
+    .map-mode-toggle.active {
+      background: #f97316;
+      color: #0f172a;
+      border-color: #ea580c;
+    }
+
+    .map-mode-toggle.active .map-mode-toggle-dot {
+      border-color: #0f172a;
+    }
+
     /* Fixed crowd-level picker card in bottom-right of the map */
     .crowd-picker-panel {
       position: absolute;
@@ -472,6 +530,14 @@
                 <span class="legend-dot" style="background: var(--rose);"></span><span>Critical</span>
               </span>
             </div>
+            <button
+              id="polygon-mode-toggle"
+              type="button"
+              class="map-mode-toggle"
+              data-label="Draw polygon zone"
+            >
+              <span class="map-mode-toggle-dot"></span>
+            </button>
             <div
               id="crowding-map"
               style="
@@ -733,6 +799,110 @@
       circle.bindPopup(container);
     }
 
+    // Helper to attach an area summary + resize control inside a polygon popup
+    function attachPolygonPopup(polygon, label, statusText) {
+      const container = document.createElement("div");
+      container.style.fontSize = "12px";
+      container.style.minWidth = "180px";
+
+      const title = document.createElement("div");
+      title.style.fontWeight = "600";
+      title.style.marginBottom = "4px";
+      title.textContent = label;
+      container.appendChild(title);
+
+      const statusLine = document.createElement("div");
+      statusLine.style.marginBottom = "4px";
+      statusLine.textContent = `Status: ${statusText}`;
+      container.appendChild(statusLine);
+
+      const latLngs = (polygon.getLatLngs()[0] || polygon.getLatLngs()).slice();
+
+      function computeAreaText(latLngArray) {
+        const pts = latLngArray.map((ll) => L.CRS.EPSG3857.project(ll));
+        let areaMeters = 0;
+        for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+          areaMeters += (pts[j].x + pts[i].x) * (pts[j].y - pts[i].y);
+        }
+        areaMeters = Math.abs(areaMeters / 2);
+        if (areaMeters >= 1_000_000) {
+          return `${(areaMeters / 1_000_000).toFixed(2)} km²`;
+        }
+        return `${Math.round(areaMeters)} m²`;
+      }
+
+      const baseAreaText = computeAreaText(latLngs);
+      const areaLine = document.createElement("div");
+      areaLine.style.fontSize = "11px";
+      areaLine.style.marginBottom = "6px";
+      areaLine.textContent = `Area ≈ ${baseAreaText}`;
+      container.appendChild(areaLine);
+
+      // Resize slider: scales polygon around its centroid
+      const resizeRow = document.createElement("div");
+      resizeRow.style.display = "flex";
+      resizeRow.style.alignItems = "center";
+      resizeRow.style.gap = "8px";
+      resizeRow.style.marginBottom = "8px";
+
+      const resizeLabel = document.createElement("span");
+      resizeLabel.style.fontSize = "11px";
+      resizeLabel.textContent = "Adjust size";
+      resizeRow.appendChild(resizeLabel);
+
+      const resizeSlider = document.createElement("input");
+      resizeSlider.type = "range";
+      resizeSlider.min = "50";
+      resizeSlider.max = "200";
+      resizeSlider.step = "10";
+      resizeSlider.value = "100";
+      resizeSlider.style.flex = "1";
+      resizeRow.appendChild(resizeSlider);
+
+      container.appendChild(resizeRow);
+
+      function scalePolygon(percent) {
+        const factor = percent / 100;
+        // centroid in lat/lng
+        const centerLat =
+          latLngs.reduce((sum, p) => sum + p.lat, 0) / latLngs.length;
+        const centerLng =
+          latLngs.reduce((sum, p) => sum + p.lng, 0) / latLngs.length;
+
+        const scaled = latLngs.map((p) => ({
+          lat: centerLat + (p.lat - centerLat) * factor,
+          lng: centerLng + (p.lng - centerLng) * factor,
+        }));
+
+        polygon.setLatLngs(scaled);
+        areaLine.textContent = `Area ≈ ${computeAreaText(scaled)}`;
+      }
+
+      resizeSlider.addEventListener("input", function () {
+        scalePolygon(Number(this.value));
+      });
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "Remove";
+      removeBtn.style.border = "none";
+      removeBtn.style.background = "#fee2e2";
+      removeBtn.style.color = "#b91c1c";
+      removeBtn.style.borderRadius = "999px";
+      removeBtn.style.padding = "4px 8px";
+      removeBtn.style.fontSize = "11px";
+      removeBtn.style.cursor = "pointer";
+      container.appendChild(removeBtn);
+
+      removeBtn.addEventListener("click", function (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        polygon.removeFrom(polygon._map || czMap);
+      });
+
+      polygon.bindPopup(container);
+    }
+
     // Render initial sample zones and make them individually resizable via their own popup
     CROWDING_ZONES.forEach((zone) => {
       const color = getCrowdColor(zone.color);
@@ -759,8 +929,12 @@
     const pickerLocationInput = document.getElementById("crowd-picker-location");
     const pickerButtons = document.querySelectorAll(".crowd-picker-btn[data-crowd-level]");
     const pickerClose = document.getElementById("crowd-picker-close");
+    const polygonToggle = document.getElementById("polygon-mode-toggle");
 
     let lastClickLatLng = null;
+    let polygonMode = false;
+    let polygonPoints = [];
+    let draftPolygon = null;
 
     function hidePickerPanel() {
       pickerPanel.style.display = "none";
@@ -769,8 +943,45 @@
       // pickerLocationInput.value = "";
     }
 
-    // When admin clicks on the map, update and reveal the picker card in bottom-right
+    function resetDraftPolygon() {
+      if (draftPolygon) {
+        czMap.removeLayer(draftPolygon);
+        draftPolygon = null;
+      }
+      polygonPoints = [];
+    }
+
+    // When admin clicks on the map, either add polygon points (polygon mode)
+    // or show circle-based picker card (default mode)
     czMap.on("click", function (e) {
+      if (polygonMode) {
+        polygonPoints.push(e.latlng);
+
+        if (draftPolygon) {
+          draftPolygon.setLatLngs(polygonPoints);
+        } else {
+          draftPolygon = L.polygon(polygonPoints, {
+            color: "#F97316",
+            fillColor: "#F97316",
+            fillOpacity: 0.12,
+            weight: 2,
+            dashArray: "4 4",
+          }).addTo(czMap);
+        }
+
+        // From the 4th point onwards, show/update the card but still allow more points
+        if (polygonPoints.length >= 4) {
+          const latSum = polygonPoints.reduce((sum, p) => sum + p.lat, 0);
+          const lngSum = polygonPoints.reduce((sum, p) => sum + p.lng, 0);
+          const centerLat = latSum / polygonPoints.length;
+          const centerLng = lngSum / polygonPoints.length;
+
+          pickerLatLng.textContent = `Lat: ${centerLat.toFixed(5)}  |  Lng: ${centerLng.toFixed(5)}`;
+          pickerPanel.style.display = "block";
+        }
+        return;
+      }
+
       lastClickLatLng = e.latlng;
       pickerLatLng.textContent = `Lat: ${e.latlng.lat.toFixed(5)}  |  Lng: ${e.latlng.lng.toFixed(5)}`;
       pickerPanel.style.display = "block";
@@ -785,15 +996,11 @@
       });
     }
 
-    // Clicking one of the levels will mark the zone and then hide the card
+    // Clicking one of the levels will mark the zone (circle or polygon) and then hide the card
     pickerButtons.forEach((btn) => {
       btn.addEventListener("click", function (evt) {
         evt.preventDefault();
         evt.stopPropagation();
-
-        if (!lastClickLatLng) {
-          return;
-        }
 
         const levelKey = this.getAttribute("data-crowd-level");
         const cfg = LEVEL_CONFIG[levelKey];
@@ -804,6 +1011,29 @@
         const load = cfg.defaultLoad;
         const color = getCrowdColor(cfg.color);
         const name = pickerLocationInput.value.trim() || "Marked Zone";
+
+        if (polygonMode && draftPolygon && polygonPoints.length >= 3) {
+          // Finalize draft polygon with selected style and area popup
+          draftPolygon.setStyle({
+            color,
+            fillColor: color,
+            fillOpacity: 0.35,
+          });
+          attachPolygonPopup(draftPolygon, name, cfg.status);
+          draftPolygon.on("click", function (clickEvt) {
+            L.DomEvent.stopPropagation(clickEvt);
+            draftPolygon.openPopup();
+          });
+          // Ready for new polygon; keep polygon mode on
+          draftPolygon = null;
+          polygonPoints = [];
+          hidePickerPanel();
+          return;
+        }
+
+        if (!lastClickLatLng) {
+          return;
+        }
 
         const circle = L.circle(lastClickLatLng, {
           color,
@@ -822,6 +1052,17 @@
         hidePickerPanel();
       });
     });
+
+    // Bottom-left toggle button to enable/disable polygon drawing mode
+    if (polygonToggle) {
+      polygonToggle.addEventListener("click", function (evt) {
+        evt.preventDefault();
+        polygonMode = !polygonMode;
+        polygonToggle.classList.toggle("active", polygonMode);
+        hidePickerPanel();
+        resetDraftPolygon();
+      });
+    }
   </script>
 </body>
 </html>
