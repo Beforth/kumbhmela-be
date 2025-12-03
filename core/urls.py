@@ -20,4 +20,6 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/user/', include('user.urls')),
+    path('api/', include('kumbh.api_urls')),  # API endpoints for zones and amenities
+    path('', include('kumbh.urls')),  # Admin views
 ]
