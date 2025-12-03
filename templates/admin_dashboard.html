@@ -595,21 +595,21 @@
         <div class="side-nav-group-title">Overview</div>
         <nav class="side-nav">
           <a
-            href="{% url 'admin_dashboard' %}"
+            href="{% url 'kumbh:admin_dashboard' %}"
             class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
           >
             <span class="nav-icon">🏠</span>
             <span>Dashboard</span>
           </a>
           <a
-            href="{% url 'admin_sos_requests' %}"
+            href="{% url 'kumbh:admin_sos_requests' %}"
             class="nav-item {% if request.resolver_match.url_name == 'admin_sos_requests' %}active{% endif %}"
           >
             <span class="nav-icon">🚨</span>
             <span>SOS Requests</span>
           </a>
           <a
-            href="{% url 'admin_lost_found' %}"
+            href="{% url 'kumbh:admin_lost_found' %}"
             class="nav-item {% if request.resolver_match.url_name == 'admin_lost_found' %}active{% endif %}"
           >
             <span class="nav-icon">🧭</span>
@@ -628,7 +628,7 @@
             <span class="nav-icon">⚙️</span>
             <span>Settings</span>
           </a>
-          <a href="{% url 'admin_logout' %}" class="nav-item">
+          <a href="{% url 'kumbh:admin_logout' %}" class="nav-item">
             <span class="nav-icon">↪</span>
             <span>Logout</span>
           </a>
