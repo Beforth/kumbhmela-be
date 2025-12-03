@@ -58,6 +58,25 @@ def admin_lost_found_view(request):
 
 
 @login_required(login_url="kumbh:admin_login")
+@user_passes_test(_is_staff, login_url="kumbh:admin_login")
+def admin_amenities_view(request):
+    """
+    Admin page showing an overview of on-ground amenities
+    (toilets, water points, help desks, etc.).
+    """
+    return render(request, "admin_amenities.html")
+
+
+@login_required(login_url="kumbh:admin_login")
+@user_passes_test(_is_staff, login_url="kumbh:admin_login")
+def admin_crowding_zones_view(request):
+    """
+    Admin page focused on crowding / congestion across zones.
+    """
+    return render(request, "admin_crowding_zones.html")
+
+
+@login_required(login_url="kumbh:admin_login")
 def admin_logout_view(request):
     """Logout admin user and redirect to login."""
     logout(request)

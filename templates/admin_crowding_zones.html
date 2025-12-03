@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kumbh Suraksha – Crowding Zones</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Leaflet map styles to match main dashboard theme -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <style>
+    :root {
+      --primary-orange: #f97316;
+      --bg-gray: #f1f5f9;
+      --text-dark: #1e293b;
+      --text-medium: #64748b;
+      --text-light: #94a3b8;
+      --border-soft: #e2e8f0;
+      --emerald: #10b981;
+      --yellow: #eab308;
+      --rose: #f43f5e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      background: var(--bg-gray);
+      min-height: 100vh;
+      color: var(--text-dark);
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 230px;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-logo-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--primary-orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+      box-shadow: 0 6px 14px rgba(249, 115, 22, 0.45);
+    }
+
+    .sidebar-logo-text {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .side-nav-group-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .side-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      color: #cbd5f5;
+      text-decoration: none;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.05s ease;
+    }
+
+    .nav-item span.nav-icon {
+      width: 18px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .nav-item:hover {
+      background: rgba(148, 163, 184, 0.18);
+    }
+
+    .nav-item.active {
+      background: #f97316;
+      color: #0f172a;
+      transform: translateY(-1px);
+    }
+
+    .nav-item.active span.nav-icon {
+      color: #0f172a;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .shell {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      width: 100%;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .page-sub {
+      font-size: 13px;
+      color: var(--text-medium);
+    }
+
+    .pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+      font-size: 12px;
+      color: var(--text-medium);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--primary-orange);
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+      padding: 18px 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: var(--text-light);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    thead {
+      background: #f8fafc;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      font-weight: 600;
+      color: var(--text-medium);
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-green {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-yellow {
+      background: #fef9c3;
+      color: #854d0e;
+    }
+
+    .badge-red {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .map-wrapper {
+      margin-top: 4px;
+      position: relative;
+    }
+
+    .map-legend {
+      position: absolute;
+      left: 16px;
+      top: 12px;
+      z-index: 1000;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #e5e7eb;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+    }
+
+    .map-mode-toggle {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      z-index: 1000;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .map-mode-toggle-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 2px solid #e5e7eb;
+      border-style: dashed;
+    }
+
+    .map-mode-toggle::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 40px;
+      bottom: 50%;
+      transform: translateY(50%);
+      white-space: nowrap;
+      background: rgba(15, 23, 42, 0.95);
+      color: #e5e7eb;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+
+    .map-mode-toggle:hover::after {
+      opacity: 1;
+    }
+
+    .map-mode-toggle.active {
+      background: #f97316;
+      color: #0f172a;
+      border-color: #ea580c;
+    }
+
+    .map-mode-toggle.active .map-mode-toggle-dot {
+      border-color: #0f172a;
+    }
+
+    /* Fixed crowd-level picker card in bottom-right of the map */
+    .crowd-picker-panel {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+      padding: 12px 14px;
+      font-size: 12px;
+      max-width: 260px;
+      z-index: 1001;
+    }
+
+    .crowd-picker-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: var(--text-dark);
+    }
+
+    .crowd-picker-close {
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      color: var(--text-light);
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .crowd-picker-sub {
+      font-size: 11px;
+      color: var(--text-medium);
+      margin-bottom: 6px;
+    }
+
+    .crowd-picker-input {
+      width: 100%;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      padding: 6px 10px;
+      font-size: 11px;
+      margin-bottom: 8px;
+      outline: none;
+    }
+
+    .crowd-picker-input::placeholder {
+      color: var(--text-light);
+    }
+
+    .crowd-picker-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .crowd-picker-btn {
+      border: 1px solid var(--border-soft);
+      background: #f8fafc;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+    }
+
+    .crowd-picker-btn:hover {
+      background: #e5f2ff;
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .crowd-picker-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+    }
+
+    @media (max-width: 768px) {
+      .layout {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+      }
+
+      .side-nav {
+        flex-direction: row;
+        gap: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-logo">
+          <div class="sidebar-logo-icon">⛯</div>
+          <div class="sidebar-logo-text">Kumbh Suraksha</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="side-nav-group-title">Overview</div>
+        <nav class="side-nav">
+          <a
+            href="{% url 'kumbh:admin_dashboard' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
+          >
+            <span class="nav-icon">🏠</span>
+            <span>Dashboard</span>
+          </a>
+          <a
+            href="{% url 'kumbh:admin_sos_requests' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'admin_sos_requests' %}active{% endif %}"
+          >
+            <span class="nav-icon">🚨</span>
+            <span>SOS Requests</span>
+          </a>
+          <a
+            href="{% url 'kumbh:admin_lost_found' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'admin_lost_found' %}active{% endif %}"
+          >
+            <span class="nav-icon">🧭</span>
+            <span>Lost / Found</span>
+          </a>
+          <a
+            href="{% url 'kumbh:admin_amenities' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'admin_amenities' %}active{% endif %}"
+          >
+            <span class="nav-icon">🚻</span>
+            <span>Amenities</span>
+          </a>
+          <a
+            href="{% url 'kumbh:admin_crowding_zones' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'admin_crowding_zones' %}active{% endif %}"
+          >
+            <span class="nav-icon">📍</span>
+            <span>Crowding Zones</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        Admin Panel • कुंभ सुरक्षा
+      </div>
+    </aside>
+
+    <div class="shell">
+      <header class="topbar">
+        <div>
+          <div class="page-title">Crowding Zones</div>
+          <div class="page-sub">
+            Live view of zones with congestion along the Kumbh route.
+          </div>
+        </div>
+        <div class="pill">
+          <span class="pill-dot"></span>
+          <span>5 zones in high / critical state</span>
+        </div>
+      </header>
+
+      <!-- Map and snapshot side by side -->
+      <section style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr); gap: 20px;">
+        <!-- Left: Map -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Crowd Map</div>
+              <div class="card-sub">Same congestion hotspots as the main dashboard, focused for operations</div>
+            </div>
+          </div>
+          <div class="map-wrapper">
+            <div class="map-legend">
+              <span style="display: flex; align-items: center; gap: 4px;">
+                <span class="legend-dot" style="background: var(--emerald);"></span><span>Safe</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 4px;">
+                <span class="legend-dot" style="background: var(--yellow);"></span><span>Busy</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 4px;">
+                <span class="legend-dot" style="background: var(--primary-orange);"></span><span>High</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 4px;">
+                <span class="legend-dot" style="background: var(--rose);"></span><span>Critical</span>
+              </span>
+            </div>
+            <button
+              id="polygon-mode-toggle"
+              type="button"
+              class="map-mode-toggle"
+              data-label="Draw polygon zone"
+            >
+              <span class="map-mode-toggle-dot"></span>
+            </button>
+            <div
+              id="crowding-map"
+              style="
+                width: 100%;
+                height: 520px;
+                border-radius: 18px;
+                border: 1px solid var(--border-soft);
+                overflow: hidden;
+              "
+            ></div>
+            <!-- Fixed picker card in bottom-right of the map -->
+            <div
+              id="crowd-picker-panel"
+              class="crowd-picker-panel"
+              style="display: none;"
+            >
+              <div class="crowd-picker-header">
+                <span>Mark crowding at selected point</span>
+                <button
+                  id="crowd-picker-close"
+                  type="button"
+                  class="crowd-picker-close"
+                >
+                  ✕
+                </button>
+              </div>
+              <div
+                id="crowd-picker-latlng"
+                class="crowd-picker-sub"
+              >
+                Click on the map to choose a point.
+              </div>
+              <input
+                id="crowd-picker-location"
+                class="crowd-picker-input"
+                type="text"
+                placeholder="Location name (optional)"
+              />
+              <div class="crowd-picker-badges">
+                <button
+                  type="button"
+                  class="crowd-picker-btn"
+                  data-crowd-level="critical"
+                >
+                  <span
+                    class="crowd-picker-dot"
+                    style="background:#F43F5E;"
+                  ></span>
+                  <span>Critical</span>
+                </button>
+                <button
+                  type="button"
+                  class="crowd-picker-btn"
+                  data-crowd-level="high"
+                >
+                  <span
+                    class="crowd-picker-dot"
+                    style="background:#F97316;"
+                  ></span>
+                  <span>High</span>
+                </button>
+                <button
+                  type="button"
+                  class="crowd-picker-btn"
+                  data-crowd-level="moderate"
+                >
+                  <span
+                    class="crowd-picker-dot"
+                    style="background:#EAB308;"
+                  ></span>
+                  <span>Moderate</span>
+                </button>
+                <button
+                  type="button"
+                  class="crowd-picker-btn"
+                  data-crowd-level="safe"
+                >
+                  <span
+                    class="crowd-picker-dot"
+                    style="background:#10B981;"
+                  ></span>
+                  <span>Low / Safe</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Crowding snapshot -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Crowding Snapshot</div>
+              <div class="card-sub">Sample list of key zones and their status</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Zone</th>
+                <th>Status</th>
+                <th>Load (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Har Ki Pauri – Sector A</td>
+                <td><span class="badge badge-red">Critical</span></td>
+                <td>94%</td>
+              </tr>
+              <tr>
+                <td>Main Bazaar – Gate 3</td>
+                <td><span class="badge badge-red">High</span></td>
+                <td>88%</td>
+              </tr>
+              <tr>
+                <td>VIP Ghat – Sector C</td>
+                <td><span class="badge badge-yellow">Busy</span></td>
+                <td>71%</td>
+              </tr>
+              <tr>
+                <td>Parking P3 – Ingress</td>
+                <td><span class="badge badge-yellow">Queueing</span></td>
+                <td>69%</td>
+              </tr>
+              <tr>
+                <td>Bridge Corridor – Gate 3</td>
+                <td><span class="badge badge-yellow">Slow</span></td>
+                <td>63%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Leaflet JS for interactive congestion map (aligned with dashboard) -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script>
+    // Base map – same view as dashboard
+    const czMap = L.map("crowding-map").setView([29.9457, 78.1642], 14);
+
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(czMap);
+
+    function getCrowdColor(color) {
+      switch (color) {
+        case "red":
+          return "#F43F5E";
+        case "orange":
+          return "#F97316";
+        case "yellow":
+          return "#EAB308";
+        case "green":
+          return "#10B981";
+        default:
+          return "#3B82F6";
+      }
+    }
+
+    // Match backend choices: safe, moderate, high, critical
+    const LEVEL_CONFIG = {
+      safe: { status: "Safe", color: "green", defaultLoad: 25 },
+      moderate: { status: "Moderate", color: "yellow", defaultLoad: 55 },
+      high: { status: "High", color: "orange", defaultLoad: 80 },
+      critical: { status: "Critical", color: "red", defaultLoad: 95 },
+    };
+
+    // Existing sample zones (initial overlay)
+    const CROWDING_ZONES = [
+      { id: 1, name: "Har Ki Pauri – Sector A", status: "Critical", color: "red", load: 94, lat: 29.9576, lng: 78.1712 },
+      { id: 2, name: "Main Bazaar – Gate 3", status: "High", color: "red", load: 88, lat: 29.95, lng: 78.16 },
+      { id: 3, name: "VIP Ghat – Sector C", status: "Busy", color: "yellow", load: 71, lat: 29.965, lng: 78.185 },
+      { id: 4, name: "Parking P3 – Ingress", status: "Queueing", color: "yellow", load: 69, lat: 29.935, lng: 78.155 },
+      { id: 5, name: "Bridge Corridor – Gate 3", status: "Slow", color: "yellow", load: 63, lat: 29.98, lng: 78.19 },
+    ];
+
+    // Helper to attach a radius slider inside the circle popup itself
+    function attachResizablePopup(circle, label, statusText, initialLoad) {
+      const baseRadius = 150 + initialLoad * 5;
+      circle.setRadius(baseRadius);
+
+      const container = document.createElement("div");
+      container.style.fontSize = "12px";
+      container.style.minWidth = "180px";
+
+      const title = document.createElement("div");
+      title.style.fontWeight = "600";
+      title.style.marginBottom = "4px";
+      title.textContent = label;
+      container.appendChild(title);
+
+      const statusLine = document.createElement("div");
+      statusLine.style.marginBottom = "6px";
+      statusLine.textContent = `Status: ${statusText}`;
+      container.appendChild(statusLine);
+
+      const controlsRow = document.createElement("div");
+      controlsRow.style.display = "flex";
+      controlsRow.style.justifyContent = "space-between";
+      controlsRow.style.alignItems = "center";
+      controlsRow.style.marginBottom = "4px";
+      container.appendChild(controlsRow);
+
+      const radiusLabel = document.createElement("div");
+      radiusLabel.style.display = "flex";
+      radiusLabel.style.justifyContent = "space-between";
+      radiusLabel.style.alignItems = "center";
+      radiusLabel.style.fontSize = "11px";
+      radiusLabel.innerHTML = `<span>Radius</span><span id="radius-display">~${Math.round(
+        baseRadius
+      )} m</span>`;
+      controlsRow.appendChild(radiusLabel);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "Remove";
+      removeBtn.style.border = "none";
+      removeBtn.style.background = "#fee2e2";
+      removeBtn.style.color = "#b91c1c";
+      removeBtn.style.borderRadius = "999px";
+      removeBtn.style.padding = "4px 8px";
+      removeBtn.style.fontSize = "11px";
+      removeBtn.style.cursor = "pointer";
+      controlsRow.appendChild(removeBtn);
+
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.min = "100";
+      slider.max = "2000";
+      slider.step = "50";
+      slider.value = String(baseRadius);
+      slider.style.width = "100%";
+      container.appendChild(slider);
+
+      slider.addEventListener("input", function () {
+        const r = Number(this.value);
+        circle.setRadius(r);
+        const display = radiusLabel.querySelector("#radius-display");
+        if (display) {
+          display.textContent = `~${Math.round(r)} m`;
+        }
+      });
+
+      removeBtn.addEventListener("click", function (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        circle.removeFrom(circle._map || czMap);
+      });
+
+      circle.bindPopup(container);
+    }
+
+    // Helper to attach an area summary + resize control inside a polygon popup
+    function attachPolygonPopup(polygon, label, statusText) {
+      const container = document.createElement("div");
+      container.style.fontSize = "12px";
+      container.style.minWidth = "180px";
+
+      const title = document.createElement("div");
+      title.style.fontWeight = "600";
+      title.style.marginBottom = "4px";
+      title.textContent = label;
+      container.appendChild(title);
+
+      const statusLine = document.createElement("div");
+      statusLine.style.marginBottom = "4px";
+      statusLine.textContent = `Status: ${statusText}`;
+      container.appendChild(statusLine);
+
+      const latLngs = (polygon.getLatLngs()[0] || polygon.getLatLngs()).slice();
+
+      function computeAreaText(latLngArray) {
+        const pts = latLngArray.map((ll) => L.CRS.EPSG3857.project(ll));
+        let areaMeters = 0;
+        for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+          areaMeters += (pts[j].x + pts[i].x) * (pts[j].y - pts[i].y);
+        }
+        areaMeters = Math.abs(areaMeters / 2);
+        if (areaMeters >= 1_000_000) {
+          return `${(areaMeters / 1_000_000).toFixed(2)} km²`;
+        }
+        return `${Math.round(areaMeters)} m²`;
+      }
+
+      const baseAreaText = computeAreaText(latLngs);
+      const areaLine = document.createElement("div");
+      areaLine.style.fontSize = "11px";
+      areaLine.style.marginBottom = "6px";
+      areaLine.textContent = `Area ≈ ${baseAreaText}`;
+      container.appendChild(areaLine);
+
+      // Resize slider: scales polygon around its centroid
+      const resizeRow = document.createElement("div");
+      resizeRow.style.display = "flex";
+      resizeRow.style.alignItems = "center";
+      resizeRow.style.gap = "8px";
+      resizeRow.style.marginBottom = "8px";
+
+      const resizeLabel = document.createElement("span");
+      resizeLabel.style.fontSize = "11px";
+      resizeLabel.textContent = "Adjust size";
+      resizeRow.appendChild(resizeLabel);
+
+      const resizeSlider = document.createElement("input");
+      resizeSlider.type = "range";
+      resizeSlider.min = "50";
+      resizeSlider.max = "200";
+      resizeSlider.step = "10";
+      resizeSlider.value = "100";
+      resizeSlider.style.flex = "1";
+      resizeRow.appendChild(resizeSlider);
+
+      container.appendChild(resizeRow);
+
+      function scalePolygon(percent) {
+        const factor = percent / 100;
+        // centroid in lat/lng
+        const centerLat =
+          latLngs.reduce((sum, p) => sum + p.lat, 0) / latLngs.length;
+        const centerLng =
+          latLngs.reduce((sum, p) => sum + p.lng, 0) / latLngs.length;
+
+        const scaled = latLngs.map((p) => ({
+          lat: centerLat + (p.lat - centerLat) * factor,
+          lng: centerLng + (p.lng - centerLng) * factor,
+        }));
+
+        polygon.setLatLngs(scaled);
+        areaLine.textContent = `Area ≈ ${computeAreaText(scaled)}`;
+      }
+
+      resizeSlider.addEventListener("input", function () {
+        scalePolygon(Number(this.value));
+      });
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "Remove";
+      removeBtn.style.border = "none";
+      removeBtn.style.background = "#fee2e2";
+      removeBtn.style.color = "#b91c1c";
+      removeBtn.style.borderRadius = "999px";
+      removeBtn.style.padding = "4px 8px";
+      removeBtn.style.fontSize = "11px";
+      removeBtn.style.cursor = "pointer";
+      container.appendChild(removeBtn);
+
+      removeBtn.addEventListener("click", function (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        polygon.removeFrom(polygon._map || czMap);
+      });
+
+      polygon.bindPopup(container);
+    }
+
+    // Render initial sample zones and make them individually resizable via their own popup
+    CROWDING_ZONES.forEach((zone) => {
+      const color = getCrowdColor(zone.color);
+      const circle = L.circle([zone.lat, zone.lng], {
+        color,
+        fillColor: color,
+        fillOpacity: 0.35,
+        radius: 150 + zone.load * 5,
+        weight: 1,
+      }).addTo(czMap);
+
+      attachResizablePopup(circle, zone.name, zone.status, zone.load);
+
+      circle.on("click", function (evt) {
+        // Do not trigger map click when interacting with a circle
+        L.DomEvent.stopPropagation(evt);
+        circle.openPopup();
+      });
+    });
+
+    // Fixed picker panel DOM references
+    const pickerPanel = document.getElementById("crowd-picker-panel");
+    const pickerLatLng = document.getElementById("crowd-picker-latlng");
+    const pickerLocationInput = document.getElementById("crowd-picker-location");
+    const pickerButtons = document.querySelectorAll(".crowd-picker-btn[data-crowd-level]");
+    const pickerClose = document.getElementById("crowd-picker-close");
+    const polygonToggle = document.getElementById("polygon-mode-toggle");
+
+    let lastClickLatLng = null;
+    let polygonMode = false;
+    let polygonPoints = [];
+    let draftPolygon = null;
+
+    function hidePickerPanel() {
+      pickerPanel.style.display = "none";
+      lastClickLatLng = null;
+      // Keep the optional name for convenience, but you can clear if needed:
+      // pickerLocationInput.value = "";
+    }
+
+    function resetDraftPolygon() {
+      if (draftPolygon) {
+        czMap.removeLayer(draftPolygon);
+        draftPolygon = null;
+      }
+      polygonPoints = [];
+    }
+
+    // When admin clicks on the map, either add polygon points (polygon mode)
+    // or show circle-based picker card (default mode)
+    czMap.on("click", function (e) {
+      if (polygonMode) {
+        polygonPoints.push(e.latlng);
+
+        if (draftPolygon) {
+          draftPolygon.setLatLngs(polygonPoints);
+        } else {
+          draftPolygon = L.polygon(polygonPoints, {
+            color: "#F97316",
+            fillColor: "#F97316",
+            fillOpacity: 0.12,
+            weight: 2,
+            dashArray: "4 4",
+          }).addTo(czMap);
+        }
+
+        // From the 4th point onwards, show/update the card but still allow more points
+        if (polygonPoints.length >= 4) {
+          const latSum = polygonPoints.reduce((sum, p) => sum + p.lat, 0);
+          const lngSum = polygonPoints.reduce((sum, p) => sum + p.lng, 0);
+          const centerLat = latSum / polygonPoints.length;
+          const centerLng = lngSum / polygonPoints.length;
+
+          pickerLatLng.textContent = `Lat: ${centerLat.toFixed(5)}  |  Lng: ${centerLng.toFixed(5)}`;
+          pickerPanel.style.display = "block";
+        }
+        return;
+      }
+
+      lastClickLatLng = e.latlng;
+      pickerLatLng.textContent = `Lat: ${e.latlng.lat.toFixed(5)}  |  Lng: ${e.latlng.lng.toFixed(5)}`;
+      pickerPanel.style.display = "block";
+    });
+
+    // Close button hides the card without creating a zone
+    if (pickerClose) {
+      pickerClose.addEventListener("click", function (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        hidePickerPanel();
+      });
+    }
+
+    // Clicking one of the levels will mark the zone (circle or polygon) and then hide the card
+    pickerButtons.forEach((btn) => {
+      btn.addEventListener("click", function (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+
+        const levelKey = this.getAttribute("data-crowd-level");
+        const cfg = LEVEL_CONFIG[levelKey];
+        if (!cfg) {
+          return;
+        }
+
+        const load = cfg.defaultLoad;
+        const color = getCrowdColor(cfg.color);
+        const name = pickerLocationInput.value.trim() || "Marked Zone";
+
+        if (polygonMode && draftPolygon && polygonPoints.length >= 3) {
+          // Finalize draft polygon with selected style and area popup
+          draftPolygon.setStyle({
+            color,
+            fillColor: color,
+            fillOpacity: 0.35,
+          });
+          attachPolygonPopup(draftPolygon, name, cfg.status);
+          draftPolygon.on("click", function (clickEvt) {
+            L.DomEvent.stopPropagation(clickEvt);
+            draftPolygon.openPopup();
+          });
+          // Ready for new polygon; keep polygon mode on
+          draftPolygon = null;
+          polygonPoints = [];
+          hidePickerPanel();
+          return;
+        }
+
+        if (!lastClickLatLng) {
+          return;
+        }
+
+        const circle = L.circle(lastClickLatLng, {
+          color,
+          fillColor: color,
+          fillOpacity: 0.35,
+          radius: 150 + load * 5,
+          weight: 1,
+        }).addTo(czMap);
+
+        attachResizablePopup(circle, name, cfg.status, load);
+
+        circle.on("click", function (clickEvt) {
+          L.DomEvent.stopPropagation(clickEvt);
+          circle.openPopup();
+        });
+        hidePickerPanel();
+      });
+    });
+
+    // Bottom-left toggle button to enable/disable polygon drawing mode
+    if (polygonToggle) {
+      polygonToggle.addEventListener("click", function (evt) {
+        evt.preventDefault();
+        polygonMode = !polygonMode;
+        polygonToggle.classList.toggle("active", polygonMode);
+        hidePickerPanel();
+        resetDraftPolygon();
+      });
+    }
+  </script>
+</body>
+</html>
+
