@@ -250,6 +250,20 @@
             <span class="nav-icon">🧭</span>
             <span>Lost / Found</span>
           </a>
+          <a
+            href="{% url 'kumbh:admin_amenities' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'admin_amenities' %}active{% endif %}"
+          >
+            <span class="nav-icon">🚻</span>
+            <span>Amenities</span>
+          </a>
+          <a
+            href="{% url 'kumbh:admin_crowding_zones' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'admin_crowding_zones' %}active{% endif %}"
+          >
+            <span class="nav-icon">📍</span>
+            <span>Crowding Zones</span>
+          </a>
         </nav>
       </div>
 
