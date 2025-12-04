@@ -4,6 +4,25 @@
   <meta charset="UTF-8" />
   <title>Kumbh Suraksha – Amenities</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Leaflet map styles to visually match the dashboard maps -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <!-- Icon fonts for sidebar nav + amenity markers/buttons -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
   <style>
     :root {
       --primary-orange: #f97316;
@@ -121,10 +140,11 @@
     }
 
     .shell {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 24px 16px 32px;
       flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      width: 100%;
     }
 
     .topbar {
@@ -168,6 +188,10 @@
       border: 1px solid #e2e8f0;
       box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
       padding: 18px 20px;
+    }
+
+    .map-card {
+      margin-bottom: 20px;
     }
 
     .card-header {
@@ -242,6 +266,90 @@
       background: var(--emerald);
     }
 
+    .amenities-map-wrapper {
+      position: relative;
+      margin-top: 8px;
+    }
+
+    .amenity-picker-panel {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      z-index: 1000;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+      padding: 10px 14px;
+      font-size: 12px;
+      max-width: 260px;
+      display: none;
+    }
+
+    .amenity-picker-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .amenity-picker-sub {
+      font-size: 11px;
+      color: var(--text-medium);
+      margin-bottom: 6px;
+    }
+
+    .amenity-type-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .amenity-type-btn {
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: #f8fafc;
+      padding: 4px 8px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .amenity-type-btn:hover {
+      background: #e5f2ff;
+    }
+
+    .amenity-location-input {
+      width: 100%;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      padding: 6px 10px;
+      font-size: 11px;
+      margin-bottom: 8px;
+      outline: none;
+    }
+
+    .amenity-location-input::placeholder {
+      color: var(--text-light);
+    }
+
+    .amenity-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 14px;
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.3);
+    }
+
     @media (max-width: 768px) {
       .layout {
         flex-direction: column;
@@ -283,35 +391,35 @@
             href="{% url 'kumbh:admin_dashboard' %}"
             class="nav-item {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
           >
-            <span class="nav-icon">🏠</span>
+            <span class="nav-icon"><i class="ri-dashboard-line"></i></span>
             <span>Dashboard</span>
           </a>
           <a
             href="{% url 'kumbh:admin_sos_requests' %}"
             class="nav-item {% if request.resolver_match.url_name == 'admin_sos_requests' %}active{% endif %}"
           >
-            <span class="nav-icon">🚨</span>
+            <span class="nav-icon"><i class="ri-alarm-warning-line"></i></span>
             <span>SOS Requests</span>
           </a>
           <a
             href="{% url 'kumbh:admin_lost_found' %}"
             class="nav-item {% if request.resolver_match.url_name == 'admin_lost_found' %}active{% endif %}"
           >
-            <span class="nav-icon">🧭</span>
+            <span class="nav-icon"><i class="ri-compass-3-line"></i></span>
             <span>Lost / Found</span>
           </a>
           <a
             href="{% url 'kumbh:admin_amenities' %}"
             class="nav-item {% if request.resolver_match.url_name == 'admin_amenities' %}active{% endif %}"
           >
-            <span class="nav-icon">🚻</span>
+            <span class="nav-icon"><i class="fa-solid fa-restroom"></i></span>
             <span>Amenities</span>
           </a>
           <a
             href="{% url 'kumbh:admin_crowding_zones' %}"
             class="nav-item {% if request.resolver_match.url_name == 'admin_crowding_zones' %}active{% endif %}"
           >
-            <span class="nav-icon">📍</span>
+            <span class="nav-icon"><i class="ri-road-map-line"></i></span>
             <span>Crowding Zones</span>
           </a>
         </nav>
@@ -336,6 +444,85 @@
         </div>
       </header>
 
+      <!-- Amenities map on top -->
+      <section class="card map-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Amenities Map</div>
+            <div class="card-sub">Key facilities like toilets, water, medical camps and help desks</div>
+          </div>
+        </div>
+        <div class="amenities-map-wrapper">
+          <div
+            id="amenities-map"
+            style="
+              width: 100%;
+              height: 420px;
+              border-radius: 18px;
+              border: 1px solid var(--border-soft);
+              overflow: hidden;
+            "
+          ></div>
+          <div id="amenity-picker-panel" class="amenity-picker-panel">
+            <div class="amenity-picker-header">
+              <span>Mark amenity at selected point</span>
+              <button
+                id="amenity-picker-close"
+                type="button"
+                style="border:none;background:transparent;font-size:12px;color:#94a3b8;cursor:pointer;"
+              >
+                ✕
+              </button>
+            </div>
+            <div id="amenity-picker-latlng" class="amenity-picker-sub">
+              Click on the map to choose a point.
+            </div>
+            <input
+              id="amenity-location-input"
+              class="amenity-location-input"
+              type="text"
+              placeholder="Other amenity name (for 'Other')"
+            />
+            <div class="amenity-type-buttons">
+              <button type="button" class="amenity-type-btn" data-amenity-type="toilet">
+                <i class="fa-solid fa-restroom"></i><span>Toilets</span>
+              </button>
+              <button type="button" class="amenity-type-btn" data-amenity-type="water">
+                <i class="ri-water-flash-line"></i><span>Water</span>
+              </button>
+              <button type="button" class="amenity-type-btn" data-amenity-type="medical">
+                <i class="ri-first-aid-kit-line"></i><span>Medical</span>
+              </button>
+              <button type="button" class="amenity-type-btn" data-amenity-type="helpdesk">
+                <i class="ri-customer-service-2-line"></i><span>Help Desk</span>
+              </button>
+              <button type="button" class="amenity-type-btn" data-amenity-type="food">
+                <i class="ri-restaurant-line"></i><span>Food</span>
+              </button>
+              <button type="button" class="amenity-type-btn" data-amenity-type="parking">
+                <i class="ri-parking-box-line"></i><span>Parking</span>
+              </button>
+              <button type="button" class="amenity-type-btn" data-amenity-type="accommodation">
+                <i class="ri-hotel-bed-line"></i><span>Accommodation</span>
+              </button>
+              <button type="button" class="amenity-type-btn" data-amenity-type="transport">
+                <i class="ri-bus-2-line"></i><span>Transport</span>
+              </button>
+              <button type="button" class="amenity-type-btn" data-amenity-type="worship">
+                <i class="fa-solid fa-hands-praying"></i><span>Worship</span>
+              </button>
+              <button type="button" class="amenity-type-btn" data-amenity-type="shopping">
+                <i class="ri-shopping-bag-2-line"></i><span>Shopping</span>
+              </button>
+              <button type="button" class="amenity-type-btn" data-amenity-type="other">
+                <i class="ri-map-pin-line"></i><span>Other</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Summary cards below the map -->
       <section class="grid">
         <div class="card">
           <div class="card-header">
@@ -412,6 +599,139 @@
       </section>
     </div>
   </div>
+
+  <!-- Leaflet JS for amenities map -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script>
+    const amenityMap = L.map("amenities-map").setView([29.9457, 78.1642], 14);
+
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(amenityMap);
+
+    const AMENITY_TYPES = {
+      toilet: { label: "Toilets", iconClass: "fa-solid fa-restroom" },
+      water: { label: "Water", iconClass: "ri-water-flash-line" },
+      medical: { label: "Medical", iconClass: "ri-first-aid-kit-line" },
+      helpdesk: { label: "Help Desk", iconClass: "ri-customer-service-2-line" },
+      food: { label: "Food", iconClass: "ri-restaurant-line" },
+      parking: { label: "Parking", iconClass: "ri-parking-box-line" },
+      accommodation: { label: "Accommodation", iconClass: "ri-hotel-bed-line" },
+      transport: { label: "Transport", iconClass: "ri-bus-2-line" },
+      worship: { label: "Worship", iconClass: "fa-solid fa-hands-praying" },
+      shopping: { label: "Shopping", iconClass: "ri-shopping-bag-2-line" },
+      other: { label: "Other Amenity", iconClass: "ri-map-pin-line" },
+    };
+
+    const STATIC_AMENITIES = [
+      {
+        name: "Har Ki Pauri Toilets & Water",
+        type: "toilet",
+        lat: 29.9576,
+        lng: 78.1712,
+      },
+      {
+        name: "Main Bazaar Help Desk",
+        type: "helpdesk",
+        lat: 29.948,
+        lng: 78.164,
+      },
+      {
+        name: "Parking P3 Medical Camp",
+        type: "medical",
+        lat: 29.94,
+        lng: 78.158,
+      },
+    ];
+
+    function addAmenityMarker(lat, lng, typeKey, name) {
+      const cfg = AMENITY_TYPES[typeKey] || { label: "Amenity", iconClass: "ri-map-pin-line" };
+      const icon = L.divIcon({
+        className: "amenity-marker",
+        html: `<i class="${cfg.iconClass}"></i>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+      });
+
+      const marker = L.marker([lat, lng], { icon }).addTo(amenityMap);
+
+      const popupId = `amenity-remove-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      marker.bindPopup(
+        `<div style="font-size:12px;min-width:160px;">
+          <div style="font-weight:600;margin-bottom:4px;">${name}</div>
+          <div style="margin-bottom:6px;">${cfg.label}</div>
+          <button id="${popupId}" style="border:none;background:#fee2e2;color:#b91c1c;border-radius:999px;padding:4px 8px;font-size:11px;cursor:pointer;">
+            Remove
+          </button>
+        </div>`
+      );
+
+      marker.on("popupopen", function () {
+        const btn = document.getElementById(popupId);
+        if (btn) {
+          btn.onclick = function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            amenityMap.removeLayer(marker);
+          };
+        }
+      });
+    }
+
+    STATIC_AMENITIES.forEach((a) => {
+      addAmenityMarker(a.lat, a.lng, a.type, a.name);
+    });
+
+    const pickerPanel = document.getElementById("amenity-picker-panel");
+    const pickerLatLng = document.getElementById("amenity-picker-latlng");
+    const pickerClose = document.getElementById("amenity-picker-close");
+    const pickerLocationInput = document.getElementById("amenity-location-input");
+    const typeButtons = document.querySelectorAll(".amenity-type-btn[data-amenity-type]");
+
+    let lastAmenityLatLng = null;
+
+    function hideAmenityPicker() {
+      pickerPanel.style.display = "none";
+      lastAmenityLatLng = null;
+    }
+
+    amenityMap.on("click", function (e) {
+      lastAmenityLatLng = e.latlng;
+      pickerLatLng.textContent = `Lat: ${e.latlng.lat.toFixed(5)}  |  Lng: ${e.latlng.lng.toFixed(
+        5
+      )}`;
+      pickerPanel.style.display = "block";
+    });
+
+    if (pickerClose) {
+      pickerClose.addEventListener("click", function (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        hideAmenityPicker();
+      });
+    }
+
+    typeButtons.forEach((btn) => {
+      btn.addEventListener("click", function (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        if (!lastAmenityLatLng) return;
+
+        const typeKey = this.getAttribute("data-amenity-type");
+        const name =
+          pickerLocationInput.value.trim() ||
+          (AMENITY_TYPES[typeKey] ? AMENITY_TYPES[typeKey].label : "Amenity");
+
+        addAmenityMarker(lastAmenityLatLng.lat, lastAmenityLatLng.lng, typeKey, name);
+        hideAmenityPicker();
+      });
+    });
+  </script>
 </body>
 </html>
 
