@@ -527,42 +527,30 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">Amenity Summary</div>
-              <div class="card-sub">Counts by category across all active zones</div>
+              <div class="card-title">Amenities List</div>
+              <div class="card-sub">All amenities with their details</div>
             </div>
           </div>
 
-          <table>
+          <table id="amenity-summary-table">
             <thead>
               <tr>
+                <th>Name</th>
                 <th>Category</th>
-                <th>Total</th>
+                <th>Location</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Public Toilets</td>
-                <td>132</td>
-                <td><span class="badge badge-green">All Operational</span></td>
-              </tr>
-              <tr>
-                <td>Drinking Water Points</td>
-                <td>42</td>
-                <td><span class="badge badge-green">Stable</span></td>
-              </tr>
-              <tr>
-                <td>Medical Camps</td>
-                <td>18</td>
-                <td><span class="badge badge-blue">On Standby</span></td>
-              </tr>
-              <tr>
-                <td>Police / Help Desks</td>
-                <td>26</td>
-                <td><span class="badge badge-yellow">Peak Shift</span></td>
+                <td colspan="4" style="text-align: center; color: var(--text-light); padding: 20px;">Loading amenities...</td>
               </tr>
             </tbody>
           </table>
+          
+          <!-- Pagination controls -->
+          <div id="amenity-summary-pagination" style="display: none; padding: 12px; border-top: 1px solid var(--border-soft);">
+          </div>
         </div>
 
         <div class="card">
@@ -573,7 +561,7 @@
             </div>
           </div>
 
-          <table>
+          <table id="zones-amenities-table">
             <thead>
               <tr>
                 <th>Zone</th>
@@ -582,19 +570,14 @@
             </thead>
             <tbody>
               <tr>
-                <td>Har Ki Pauri – Sector A</td>
-                <td>Toilets, Water, Medical Camp, Help Desk</td>
-              </tr>
-              <tr>
-                <td>VIP Ghat – Sector C</td>
-                <td>Water, Help Desk, Police Post</td>
-              </tr>
-              <tr>
-                <td>Parking P3</td>
-                <td>Toilets, Water, Lost &amp; Found Desk</td>
+                <td colspan="2" style="text-align: center; color: var(--text-light); padding: 20px;">Loading zones...</td>
               </tr>
             </tbody>
           </table>
+          
+          <!-- Pagination controls -->
+          <div id="zones-amenities-pagination" style="display: none; padding: 12px; border-top: 1px solid var(--border-soft);">
+          </div>
         </div>
       </section>
     </div>
@@ -628,28 +611,130 @@
       other: { label: "Other Amenity", iconClass: "ri-map-pin-line" },
     };
 
-    const STATIC_AMENITIES = [
-      {
-        name: "Har Ki Pauri Toilets & Water",
-        type: "toilet",
-        lat: 29.9576,
-        lng: 78.1712,
-      },
-      {
-        name: "Main Bazaar Help Desk",
-        type: "helpdesk",
-        lat: 29.948,
-        lng: 78.164,
-      },
-      {
-        name: "Parking P3 Medical Camp",
-        type: "medical",
-        lat: 29.94,
-        lng: 78.158,
-      },
-    ];
+    // Get CSRF token from cookies
+    function getCsrfToken() {
+      const name = 'csrftoken';
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
 
-    function addAmenityMarker(lat, lng, typeKey, name) {
+    // Map backend category to frontend type key
+    const CATEGORY_TO_TYPE = {
+      'restroom': 'toilet',
+      'food': 'food',
+      'medical': 'medical',
+      'parking': 'parking',
+      'accommodation': 'accommodation',
+      'transport': 'transport',
+      'worship': 'worship',
+      'shopping': 'shopping',
+    };
+
+    // Store amenities and zones from backend
+    let amenitiesFromBackend = [];
+    let zonesFromBackend = [];
+    let amenityMarkers = [];
+    let amenityMarkerMap = new Map(); // Map marker to amenity ID
+    
+    // Pagination state for zones with amenities
+    let zonesAmenitiesCurrentPage = 1;
+    const zonesAmenitiesPerPage = 10;
+    
+    // Pagination state for amenity list
+    let amenityListCurrentPage = 1;
+    const amenityListPerPage = 10;
+
+    // Fetch amenities from backend
+    async function fetchAmenities() {
+      try {
+        console.log('Fetching amenities from /api/amenities/');
+        const response = await fetch('/api/amenities/');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch amenities: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log('Raw API response:', data);
+        
+        // Handle both array and object with results property
+        amenitiesFromBackend = Array.isArray(data) ? data : (data.results || []);
+        console.log(`Fetched ${amenitiesFromBackend.length} amenities from backend`);
+        console.log('Amenities data:', amenitiesFromBackend);
+        
+        if (amenitiesFromBackend.length === 0) {
+          console.warn('No amenities found in backend response');
+        }
+        
+        renderAmenitiesOnMap();
+        updateAmenitySummary();
+        // Fetch zones after amenities
+        await fetchZones();
+      } catch (error) {
+        console.error('Error fetching amenities:', error);
+        // Show error in summary table
+        const tableBody = document.querySelector('#amenity-summary-table tbody');
+        if (tableBody) {
+          tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #ef4444; padding: 20px;">Error loading amenities. Please refresh the page.</td></tr>';
+        }
+      }
+    }
+
+    // Fetch zones from backend
+    async function fetchZones() {
+      try {
+        const response = await fetch('/api/zones/');
+        if (!response.ok) {
+          throw new Error('Failed to fetch zones');
+        }
+        const data = await response.json();
+        zonesFromBackend = Array.isArray(data) ? data : (data.results || []);
+        console.log(`Fetched ${zonesFromBackend.length} zones from backend`);
+        updateZonesWithAmenities();
+      } catch (error) {
+        console.error('Error fetching zones:', error);
+      }
+    }
+
+    // Render amenities on map
+    function renderAmenitiesOnMap() {
+      // Clear existing markers
+      amenityMarkers.forEach(marker => amenityMap.removeLayer(marker));
+      amenityMarkers = [];
+      amenityMarkerMap.clear();
+
+      amenitiesFromBackend.forEach(amenity => {
+        if (amenity.lat && amenity.lng) {
+          const lat = parseFloat(amenity.lat);
+          const lng = parseFloat(amenity.lng);
+          
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const typeKey = CATEGORY_TO_TYPE[amenity.category] || 'other';
+            addAmenityMarker(lat, lng, typeKey, amenity.name, amenity.id, amenity);
+          }
+        }
+      });
+
+      // Fit map to show all amenities
+      if (amenityMarkers.length > 0) {
+        try {
+          const group = new L.featureGroup(amenityMarkers);
+          amenityMap.fitBounds(group.getBounds().pad(0.1));
+        } catch (error) {
+          console.error('Error fitting bounds:', error);
+        }
+      }
+    }
+
+    function addAmenityMarker(lat, lng, typeKey, name, amenityId = null, amenityData = null) {
       const cfg = AMENITY_TYPES[typeKey] || { label: "Amenity", iconClass: "ri-map-pin-line" };
       const icon = L.divIcon({
         className: "amenity-marker",
@@ -659,33 +744,442 @@
       });
 
       const marker = L.marker([lat, lng], { icon }).addTo(amenityMap);
+      amenityMarkers.push(marker);
+      
+      if (amenityId) {
+        amenityMarkerMap.set(marker, amenityId);
+      }
 
       const popupId = `amenity-remove-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      marker.bindPopup(
-        `<div style="font-size:12px;min-width:160px;">
+      let popupContent = `
+        <div style="font-size:12px;min-width:160px;">
           <div style="font-weight:600;margin-bottom:4px;">${name}</div>
           <div style="margin-bottom:6px;">${cfg.label}</div>
+      `;
+      
+      if (amenityData && amenityData.description) {
+        popupContent += `<div style="font-size:11px;color:#64748b;margin-bottom:6px;">${amenityData.description}</div>`;
+      }
+      
+      if (amenityData && amenityData.phone) {
+        popupContent += `<div style="font-size:11px;color:#64748b;margin-bottom:6px;">📞 ${amenityData.phone}</div>`;
+      }
+      
+      popupContent += `
           <button id="${popupId}" style="border:none;background:#fee2e2;color:#b91c1c;border-radius:999px;padding:4px 8px;font-size:11px;cursor:pointer;">
             Remove
           </button>
-        </div>`
-      );
+        </div>
+      `;
+      
+      marker.bindPopup(popupContent);
 
       marker.on("popupopen", function () {
         const btn = document.getElementById(popupId);
         if (btn) {
-          btn.onclick = function (evt) {
+          btn.onclick = async function (evt) {
             evt.preventDefault();
             evt.stopPropagation();
-            amenityMap.removeLayer(marker);
+            
+            if (amenityId) {
+              // Delete from backend
+              if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                try {
+                  await deleteAmenity(amenityId);
+                  amenityMap.removeLayer(marker);
+                  amenityMarkers = amenityMarkers.filter(m => m !== marker);
+                  amenityMarkerMap.delete(marker);
+                  fetchAmenities(); // Refresh
+                } catch (error) {
+                  console.error('Failed to delete amenity:', error);
+                  alert('Failed to delete amenity. Please try again.');
+                }
+              }
+            } else {
+              // Just remove from map if not saved
+              amenityMap.removeLayer(marker);
+              amenityMarkers = amenityMarkers.filter(m => m !== marker);
+            }
           };
         }
       });
     }
 
-    STATIC_AMENITIES.forEach((a) => {
-      addAmenityMarker(a.lat, a.lng, a.type, a.name);
-    });
+    // API functions
+    async function createAmenity(amenityData) {
+      try {
+        const response = await fetch('/api/amenities/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+          },
+          body: JSON.stringify(amenityData)
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Failed to create amenity');
+        }
+        return await response.json();
+      } catch (error) {
+        console.error('Error creating amenity:', error);
+        throw error;
+      }
+    }
+
+    async function deleteAmenity(amenityId) {
+      try {
+        const response = await fetch(`/api/amenities/${amenityId}/`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRFToken': getCsrfToken()
+          }
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Failed to delete amenity');
+        }
+        return true;
+      } catch (error) {
+        console.error('Error deleting amenity:', error);
+        throw error;
+      }
+    }
+
+    // Update amenities list table with pagination
+    function updateAmenitySummary(page = 1) {
+      const tableBody = document.querySelector('#amenity-summary-table tbody');
+      const paginationDiv = document.getElementById('amenity-summary-pagination');
+      
+      if (!tableBody) {
+        console.error('Amenity list table body not found');
+        return;
+      }
+
+      console.log('Updating amenity list with', amenitiesFromBackend.length, 'amenities');
+
+      // Map category keys to display names
+      const categoryDisplay = {
+        'restroom': 'Public Toilets',
+        'food': 'Food & Water Points',
+        'medical': 'Medical Camps',
+        'parking': 'Parking Areas',
+        'accommodation': 'Accommodation',
+        'transport': 'Transport Hubs',
+        'worship': 'Worship Areas',
+        'shopping': 'Shopping Areas',
+      };
+
+      // Sort amenities by name
+      const sortedAmenities = [...amenitiesFromBackend].sort((a, b) => {
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
+      const totalAmenities = sortedAmenities.length;
+      const totalPages = Math.ceil(totalAmenities / amenityListPerPage);
+      amenityListCurrentPage = Math.max(1, Math.min(page, totalPages));
+
+      // Clear table
+      tableBody.innerHTML = '';
+
+      if (sortedAmenities.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-light); padding: 20px;">No amenities found</td></tr>';
+        if (paginationDiv) paginationDiv.style.display = 'none';
+        return;
+      }
+
+      // Calculate pagination
+      const startIndex = (amenityListCurrentPage - 1) * amenityListPerPage;
+      const endIndex = Math.min(startIndex + amenityListPerPage, totalAmenities);
+      const paginatedAmenities = sortedAmenities.slice(startIndex, endIndex);
+
+      // Render amenities for current page
+      paginatedAmenities.forEach((amenity) => {
+        const row = document.createElement('tr');
+        const categoryName = categoryDisplay[amenity.category] || amenity.category || 'Other';
+        const location = amenity.lat && amenity.lng 
+          ? `${parseFloat(amenity.lat).toFixed(4)}, ${parseFloat(amenity.lng).toFixed(4)}`
+          : 'N/A';
+        
+        row.innerHTML = `
+          <td>${amenity.name || 'Unnamed Amenity'}</td>
+          <td>${categoryName}</td>
+          <td style="font-size: 11px; color: var(--text-medium);">${location}</td>
+          <td><span class="badge badge-green">Operational</span></td>
+        `;
+        tableBody.appendChild(row);
+      });
+      
+      console.log(`Rendered ${paginatedAmenities.length} amenities on page ${amenityListCurrentPage}`);
+
+      // Update pagination controls
+      if (paginationDiv) {
+        if (totalAmenities > amenityListPerPage) {
+          paginationDiv.style.display = 'flex';
+          paginationDiv.style.justifyContent = 'space-between';
+          paginationDiv.style.alignItems = 'center';
+          paginationDiv.style.gap = '12px';
+          
+          paginationDiv.innerHTML = `
+            <div style="font-size: 12px; color: var(--text-medium);">
+              <span>Showing ${startIndex + 1}-${endIndex} of ${totalAmenities}</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button 
+                type="button" 
+                id="amenity-list-prev" 
+                class="modal-btn modal-btn-secondary"
+                style="padding: 4px 12px; font-size: 11px;"
+                ${amenityListCurrentPage === 1 ? 'disabled' : ''}
+              >
+                Previous
+              </button>
+              <span style="font-size: 11px; color: var(--text-medium);">Page ${amenityListCurrentPage} of ${totalPages}</span>
+              <button 
+                type="button" 
+                id="amenity-list-next" 
+                class="modal-btn modal-btn-secondary"
+                style="padding: 4px 12px; font-size: 11px;"
+                ${amenityListCurrentPage === totalPages ? 'disabled' : ''}
+              >
+                Next
+              </button>
+            </div>
+          `;
+          
+          // Add event listeners
+          const prevBtn = document.getElementById('amenity-list-prev');
+          const nextBtn = document.getElementById('amenity-list-next');
+          
+          if (prevBtn) {
+            prevBtn.onclick = () => {
+              if (amenityListCurrentPage > 1) {
+                updateAmenitySummary(amenityListCurrentPage - 1);
+              }
+            };
+          }
+          
+          if (nextBtn) {
+            nextBtn.onclick = () => {
+              if (amenityListCurrentPage < totalPages) {
+                updateAmenitySummary(amenityListCurrentPage + 1);
+              }
+            };
+          }
+        } else {
+          paginationDiv.style.display = 'none';
+        }
+      }
+    }
+
+    // Calculate distance between two points (Haversine formula)
+    function getDistance(lat1, lng1, lat2, lng2) {
+      const R = 6371e3; // Earth radius in meters
+      const φ1 = lat1 * Math.PI / 180;
+      const φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180;
+      const Δλ = (lng2 - lng1) * Math.PI / 180;
+
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+      return R * c; // Distance in meters
+    }
+
+    // Check if point is inside polygon (Ray casting algorithm)
+    function isPointInPolygon(lat, lng, polygon) {
+      if (!polygon || !Array.isArray(polygon) || polygon.length < 3) return false;
+      
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i][0], yi = polygon[i][1];
+        const xj = polygon[j][0], yj = polygon[j][1];
+        
+        const intersect = ((yi > lng) !== (yj > lng)) &&
+          (lat < (xj - xi) * (lng - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    // Find amenities near a zone
+    function findAmenitiesForZone(zone) {
+      const nearbyAmenities = [];
+      const maxDistance = 500; // 500 meters radius for circle zones
+      
+      amenitiesFromBackend.forEach(amenity => {
+        if (!amenity.lat || !amenity.lng) return;
+        
+        const amenityLat = parseFloat(amenity.lat);
+        const amenityLng = parseFloat(amenity.lng);
+        
+        if (isNaN(amenityLat) || isNaN(amenityLng)) return;
+        
+        // Check if amenity is in polygon zone
+        if (zone.polygon && Array.isArray(zone.polygon) && zone.polygon.length >= 3) {
+          if (isPointInPolygon(amenityLat, amenityLng, zone.polygon)) {
+            nearbyAmenities.push(amenity);
+          }
+        }
+        // Check if amenity is within radius of circle zone
+        else if (zone.lat && zone.lng) {
+          const zoneLat = parseFloat(zone.lat);
+          const zoneLng = parseFloat(zone.lng);
+          
+          if (!isNaN(zoneLat) && !isNaN(zoneLng)) {
+            const distance = getDistance(zoneLat, zoneLng, amenityLat, amenityLng);
+            if (distance <= maxDistance) {
+              nearbyAmenities.push(amenity);
+            }
+          }
+        }
+      });
+      
+      return nearbyAmenities;
+    }
+
+    // Update zones with amenities table
+    function updateZonesWithAmenities(page = 1) {
+      const tableBody = document.querySelector('#zones-amenities-table tbody');
+      const paginationDiv = document.getElementById('zones-amenities-pagination');
+      
+      if (!tableBody) return;
+
+      // Clear existing rows
+      tableBody.innerHTML = '';
+
+      // Find all zones with their amenities (show all zones, even if no amenities)
+      const zonesWithAmenities = zonesFromBackend
+        .filter(zone => {
+          // Only show zones that have coordinates (can be displayed on map)
+          return (zone.lat && zone.lng) || (zone.polygon && Array.isArray(zone.polygon) && zone.polygon.length > 0);
+        })
+        .map(zone => {
+          const amenities = findAmenitiesForZone(zone);
+          return {
+            zone: zone,
+            amenities: amenities,
+            amenityCount: amenities.length
+          };
+        })
+        .sort((a, b) => {
+          // Sort by amenity count (zones with more amenities first), then by name
+          if (b.amenityCount !== a.amenityCount) {
+            return b.amenityCount - a.amenityCount;
+          }
+          return (a.zone.name || '').localeCompare(b.zone.name || '');
+        });
+
+      const totalZones = zonesWithAmenities.length;
+      const totalPages = Math.ceil(totalZones / zonesAmenitiesPerPage);
+      zonesAmenitiesCurrentPage = Math.max(1, Math.min(page, totalPages));
+
+      if (zonesWithAmenities.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--text-light); padding: 20px;">No zones found</td></tr>';
+        if (paginationDiv) paginationDiv.style.display = 'none';
+        return;
+      }
+
+      // Calculate pagination
+      const startIndex = (zonesAmenitiesCurrentPage - 1) * zonesAmenitiesPerPage;
+      const endIndex = Math.min(startIndex + zonesAmenitiesPerPage, totalZones);
+      const paginatedZones = zonesWithAmenities.slice(startIndex, endIndex);
+
+      // Category display names
+      const categoryDisplay = {
+        'restroom': 'Toilets',
+        'food': 'Food & Water',
+        'medical': 'Medical',
+        'parking': 'Parking',
+        'accommodation': 'Accommodation',
+        'transport': 'Transport',
+        'worship': 'Worship',
+        'shopping': 'Shopping',
+      };
+
+      // Render zones for current page
+      paginatedZones.forEach(({ zone, amenities }) => {
+        const row = document.createElement('tr');
+        
+        // Get unique categories
+        let facilitiesText = 'No facilities';
+        if (amenities.length > 0) {
+          const categories = [...new Set(amenities.map(a => a.category))];
+          facilitiesText = categories
+            .map(cat => categoryDisplay[cat] || cat)
+            .join(', ');
+        }
+        
+        row.innerHTML = `
+          <td>${zone.name || 'Unnamed Zone'}</td>
+          <td>${facilitiesText}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      // Update pagination controls
+      if (paginationDiv) {
+        if (totalZones > zonesAmenitiesPerPage) {
+          paginationDiv.style.display = 'flex';
+          paginationDiv.style.justifyContent = 'space-between';
+          paginationDiv.style.alignItems = 'center';
+          paginationDiv.style.gap = '12px';
+          
+          paginationDiv.innerHTML = `
+            <div style="font-size: 12px; color: var(--text-medium);">
+              <span>Showing ${startIndex + 1}-${endIndex} of ${totalZones}</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button 
+                type="button" 
+                id="zones-amenities-prev" 
+                class="modal-btn modal-btn-secondary"
+                style="padding: 4px 12px; font-size: 11px;"
+                ${zonesAmenitiesCurrentPage === 1 ? 'disabled' : ''}
+              >
+                Previous
+              </button>
+              <span style="font-size: 11px; color: var(--text-medium);">Page ${zonesAmenitiesCurrentPage} of ${totalPages}</span>
+              <button 
+                type="button" 
+                id="zones-amenities-next" 
+                class="modal-btn modal-btn-secondary"
+                style="padding: 4px 12px; font-size: 11px;"
+                ${zonesAmenitiesCurrentPage === totalPages ? 'disabled' : ''}
+              >
+                Next
+              </button>
+            </div>
+          `;
+          
+          // Add event listeners
+          const prevBtn = document.getElementById('zones-amenities-prev');
+          const nextBtn = document.getElementById('zones-amenities-next');
+          
+          if (prevBtn) {
+            prevBtn.onclick = () => {
+              if (zonesAmenitiesCurrentPage > 1) {
+                updateZonesWithAmenities(zonesAmenitiesCurrentPage - 1);
+              }
+            };
+          }
+          
+          if (nextBtn) {
+            nextBtn.onclick = () => {
+              if (zonesAmenitiesCurrentPage < totalPages) {
+                updateZonesWithAmenities(zonesAmenitiesCurrentPage + 1);
+              }
+            };
+          }
+        } else {
+          paginationDiv.style.display = 'none';
+        }
+      }
+    }
 
     const pickerPanel = document.getElementById("amenity-picker-panel");
     const pickerLatLng = document.getElementById("amenity-picker-latlng");
@@ -717,7 +1211,7 @@
     }
 
     typeButtons.forEach((btn) => {
-      btn.addEventListener("click", function (evt) {
+      btn.addEventListener("click", async function (evt) {
         evt.preventDefault();
         evt.stopPropagation();
         if (!lastAmenityLatLng) return;
@@ -727,10 +1221,53 @@
           pickerLocationInput.value.trim() ||
           (AMENITY_TYPES[typeKey] ? AMENITY_TYPES[typeKey].label : "Amenity");
 
-        addAmenityMarker(lastAmenityLatLng.lat, lastAmenityLatLng.lng, typeKey, name);
-        hideAmenityPicker();
+        // Map frontend type to backend category
+        const categoryMap = {
+          'toilet': 'restroom',
+          'water': 'food',
+          'medical': 'medical',
+          'helpdesk': 'medical', // or create a new category
+          'food': 'food',
+          'parking': 'parking',
+          'accommodation': 'accommodation',
+          'transport': 'transport',
+          'worship': 'worship',
+          'shopping': 'shopping',
+          'other': 'other', // Use 'other' category
+        };
+
+        const category = categoryMap[typeKey] || 'food';
+        
+        // Format coordinates
+        const lat = parseFloat(lastAmenityLatLng.lat.toFixed(6));
+        const lng = parseFloat(lastAmenityLatLng.lng.toFixed(6));
+
+        try {
+          // Create amenity in backend
+          const amenityData = {
+            name: name,
+            category: category,
+            latitude: lat,
+            longitude: lng
+          };
+
+          console.log('Creating amenity with data:', amenityData);
+          const savedAmenity = await createAmenity(amenityData);
+          console.log('Amenity created:', savedAmenity);
+          
+          // Refresh amenities from backend
+          fetchAmenities();
+          hideAmenityPicker();
+          alert('Amenity created successfully!');
+        } catch (error) {
+          console.error('Failed to save amenity:', error);
+          alert('Failed to save amenity: ' + (error.message || 'Please try again.'));
+        }
       });
     });
+
+    // Fetch amenities on page load
+    fetchAmenities();
   </script>
 </body>
 </html>

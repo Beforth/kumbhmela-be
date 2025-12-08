@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Family - Kumbh Suraksha</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .icon {
+            width: 80px;
+            height: 80px;
+            background: #FF6B35;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .button {
+            background: #FF6B35;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #E55A2B;
+        }
+        .button-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .button-secondary:hover {
+            background: #e0e0e0;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #FF6B35;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">👥</div>
+        <h1>Join Family Invitation</h1>
+        <p>You've been invited to join a family on Kumbh Suraksha!</p>
+        <p style="font-size: 14px; color: #999;">Redirecting to app...</p>
+        <div class="spinner"></div>
+        <a href="{{ app_deep_link }}" class="button" id="openApp">Open in App</a>
+        <a href="?web=true" class="button button-secondary">Continue in Browser</a>
+    </div>
+
+    <script>
+        // Try to open app immediately
+        const appLink = "{{ app_deep_link }}";
+        const webLink = window.location.href + "?web=true";
+        
+        // Try to open app
+        window.location.href = appLink;
+        
+        // If app doesn't open within 2 seconds, show option to continue in browser
+        setTimeout(function() {
+            document.getElementById('openApp').style.display = 'block';
+        }, 2000);
+        
+        // Handle web parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('web') === 'true') {
+            window.location.href = webLink.replace('?web=true', '') + '?web=true';
+        }
+    </script>
+</body>
+</html>
+

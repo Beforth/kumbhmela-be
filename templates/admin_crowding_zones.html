@@ -284,62 +284,35 @@
       border-radius: 999px;
     }
 
-    .map-mode-toggle {
-      position: absolute;
-      left: 16px;
-      bottom: 16px;
-      z-index: 1000;
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      border: 1px solid var(--border-soft);
-      background: rgba(15, 23, 42, 0.9);
-      color: #e5e7eb;
-      font-size: 14px;
-      cursor: pointer;
+    .zone-mode-toggle {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-    }
-
-    .map-mode-toggle-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
-      border: 2px solid #e5e7eb;
-      border-style: dashed;
-    }
-
-    .map-mode-toggle::after {
-      content: attr(data-label);
-      position: absolute;
-      left: 40px;
-      bottom: 50%;
-      transform: translateY(50%);
-      white-space: nowrap;
-      background: rgba(15, 23, 42, 0.95);
-      color: #e5e7eb;
-      font-size: 11px;
-      padding: 4px 8px;
+      gap: 8px;
+      padding: 6px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.15s ease;
+      border: 1px solid var(--border-soft);
+      background: #f8fafc;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-medium);
     }
 
-    .map-mode-toggle:hover::after {
-      opacity: 1;
+    .zone-mode-toggle:hover {
+      background: #e2e8f0;
+      transform: translateY(-1px);
     }
 
-    .map-mode-toggle.active {
+    .zone-mode-toggle.active {
       background: #f97316;
-      color: #0f172a;
+      color: #ffffff;
       border-color: #ea580c;
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
     }
 
-    .map-mode-toggle.active .map-mode-toggle-dot {
-      border-color: #0f172a;
+    .zone-mode-toggle-icon {
+      font-size: 14px;
     }
 
     /* Fixed crowd-level picker card in bottom-right of the map */
@@ -427,6 +400,361 @@
       border-radius: 999px;
     }
 
+    /* Guided Tour Styles */
+    .tour-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9998;
+      display: none;
+      pointer-events: none;
+    }
+
+    .tour-overlay.active {
+      display: block;
+    }
+
+    .tour-highlight {
+      position: relative;
+      z-index: 9999;
+      transition: all 0.3s ease;
+    }
+
+    .tour-highlight::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      border: 3px solid #f97316;
+      border-radius: 8px;
+      box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.3),
+                  0 0 20px rgba(249, 115, 22, 0.5),
+                  0 0 40px rgba(249, 115, 22, 0.3);
+      animation: pulse-border 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% {
+        box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.3),
+                    0 0 20px rgba(249, 115, 22, 0.5),
+                    0 0 40px rgba(249, 115, 22, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.4),
+                    0 0 30px rgba(249, 115, 22, 0.7),
+                    0 0 60px rgba(249, 115, 22, 0.4);
+      }
+    }
+
+    .tour-tooltip {
+      position: fixed;
+      z-index: 10000;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 0;
+      min-width: 320px;
+      max-width: 400px;
+      display: none;
+      animation: fadeInUp 0.3s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .tour-tooltip.active {
+      display: block;
+    }
+
+    .tour-tooltip-header {
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      color: #ffffff;
+      padding: 16px 20px;
+      border-radius: 16px 16px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tour-tooltip-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tour-tooltip-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: #ffffff;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: background 0.2s ease;
+    }
+
+    .tour-tooltip-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .tour-tooltip-body {
+      padding: 20px;
+      color: #1e293b;
+    }
+
+    .tour-tooltip-content {
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .tour-tooltip-content ul {
+      margin: 8px 0 0 20px;
+      padding: 0;
+    }
+
+    .tour-tooltip-content li {
+      margin: 6px 0;
+    }
+
+    .tour-tooltip-content strong {
+      color: #f97316;
+    }
+
+    .tour-tooltip-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      border-top: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 0 0 16px 16px;
+    }
+
+    .tour-progress {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .tour-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tour-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tour-btn-primary {
+      background: #f97316;
+      color: #ffffff;
+    }
+
+    .tour-btn-primary:hover {
+      background: #ea580c;
+      transform: translateY(-1px);
+    }
+
+    .tour-btn-secondary {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .tour-btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    .tour-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .tour-start-btn {
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .tour-start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 10001;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modal {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      min-width: 400px;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+      z-index: 10002;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      color: #64748b;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    .modal-body {
+      padding: 24px;
+      color: #475569;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #f8fafc;
+      border-radius: 0 0 16px 16px;
+    }
+
+    .modal-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .modal-btn-primary {
+      background: #f97316;
+      color: #ffffff;
+    }
+
+    .modal-btn-primary:hover {
+      background: #ea580c;
+      transform: translateY(-1px);
+    }
+
+    .modal-btn-secondary {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .modal-btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    .modal-icon {
+      font-size: 24px;
+    }
+
     @media (max-width: 768px) {
       .layout {
         flex-direction: column;
@@ -511,11 +839,62 @@
             Live view of zones with congestion along the Kumbh route.
           </div>
         </div>
-        <div class="pill">
-          <span class="pill-dot"></span>
-          <span>5 zones in high / critical state</span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button type="button" class="tour-start-btn" id="tour-start-btn">
+            <span>🎯</span>
+            <span>Start Guided Tour</span>
+          </button>
+          <div class="pill">
+            <span class="pill-dot"></span>
+            <span>5 zones in high / critical state</span>
+          </div>
         </div>
       </header>
+
+      <!-- Tour Overlay -->
+      <div class="tour-overlay" id="tour-overlay"></div>
+
+      <!-- Modal Overlay -->
+      <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal">
+          <div class="modal-header">
+            <div class="modal-title" id="modal-title">
+              <span class="modal-icon" id="modal-icon">⚠️</span>
+              <span id="modal-title-text">Alert</span>
+            </div>
+            <button type="button" class="modal-close" id="modal-close">✕</button>
+          </div>
+          <div class="modal-body" id="modal-body">
+            <!-- Modal content will be inserted here -->
+          </div>
+          <div class="modal-footer" id="modal-footer">
+            <!-- Modal buttons will be inserted here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Tour Tooltip -->
+      <div class="tour-tooltip" id="tour-tooltip">
+        <div class="tour-tooltip-header">
+          <div class="tour-tooltip-title">
+            <span id="tour-step-icon">📍</span>
+            <span id="tour-step-title">Welcome to Crowding Zones</span>
+          </div>
+          <button type="button" class="tour-tooltip-close" id="tour-close-btn">✕</button>
+        </div>
+        <div class="tour-tooltip-body">
+          <div class="tour-tooltip-content" id="tour-step-content">
+            Let's learn how to use the crowding zones feature step by step.
+          </div>
+        </div>
+        <div class="tour-tooltip-footer">
+          <div class="tour-progress" id="tour-progress">Step 1 of 6</div>
+          <div class="tour-buttons">
+            <button type="button" class="tour-btn tour-btn-secondary" id="tour-prev-btn">Previous</button>
+            <button type="button" class="tour-btn tour-btn-primary" id="tour-next-btn">Next</button>
+          </div>
+        </div>
+      </div>
 
       <!-- Map and snapshot side by side -->
       <section style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr); gap: 20px;">
@@ -526,9 +905,18 @@
               <div class="card-title">Crowd Map</div>
               <div class="card-sub">Same congestion hotspots as the main dashboard, focused for operations</div>
             </div>
+            <button
+              id="polygon-mode-toggle"
+              type="button"
+              class="zone-mode-toggle"
+              title="Toggle between Circle and Polygon zone marking"
+            >
+              <span class="zone-mode-toggle-icon" id="zone-mode-icon">⭕</span>
+              <span id="zone-mode-text">Circle Mode</span>
+            </button>
           </div>
           <div class="map-wrapper">
-            <div class="map-legend">
+            <div class="map-legend" id="tour-legend">
               <span style="display: flex; align-items: center; gap: 4px;">
                 <span class="legend-dot" style="background: var(--emerald);"></span><span>Safe</span>
               </span>
@@ -542,16 +930,9 @@
                 <span class="legend-dot" style="background: var(--rose);"></span><span>Critical</span>
               </span>
             </div>
-            <button
-              id="polygon-mode-toggle"
-              type="button"
-              class="map-mode-toggle"
-              data-label="Draw polygon zone"
-            >
-              <span class="map-mode-toggle-dot"></span>
-            </button>
             <div
               id="crowding-map"
+              class="tour-map"
               style="
                 width: 100%;
                 height: 520px;
@@ -563,7 +944,7 @@
             <!-- Fixed picker card in bottom-right of the map -->
             <div
               id="crowd-picker-panel"
-              class="crowd-picker-panel"
+              class="crowd-picker-panel tour-picker-panel"
               style="display: none;"
             >
               <div class="crowd-picker-header">
@@ -639,7 +1020,7 @@
         </div>
 
         <!-- Right: Crowding snapshot -->
-        <div class="card">
+        <div class="card" id="tour-snapshot">
           <div class="card-header">
             <div>
               <div class="card-title">Crowding Snapshot</div>
@@ -647,7 +1028,7 @@
             </div>
           </div>
 
-          <table>
+          <table id="snapshot-table">
             <thead>
               <tr>
                 <th>Zone</th>
@@ -657,34 +1038,63 @@
             </thead>
             <tbody>
               <tr>
-                <td>Har Ki Pauri – Sector A</td>
-                <td><span class="badge badge-red">Critical</span></td>
-                <td>94%</td>
-              </tr>
-              <tr>
-                <td>Main Bazaar – Gate 3</td>
-                <td><span class="badge badge-red">High</span></td>
-                <td>88%</td>
-              </tr>
-              <tr>
-                <td>VIP Ghat – Sector C</td>
-                <td><span class="badge badge-yellow">Busy</span></td>
-                <td>71%</td>
-              </tr>
-              <tr>
-                <td>Parking P3 – Ingress</td>
-                <td><span class="badge badge-yellow">Queueing</span></td>
-                <td>69%</td>
-              </tr>
-              <tr>
-                <td>Bridge Corridor – Gate 3</td>
-                <td><span class="badge badge-yellow">Slow</span></td>
-                <td>63%</td>
+                <td colspan="3" style="text-align: center; color: var(--text-light); padding: 20px;">Loading zones...</td>
               </tr>
             </tbody>
           </table>
+          
+          <!-- Pagination controls -->
+          <div id="snapshot-pagination" style="display: none; padding: 12px; border-top: 1px solid var(--border-color);">
+            <div style="font-size: 12px; color: var(--text-medium);">
+              <span id="pagination-info">Showing 0-0 of 0</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button 
+                type="button" 
+                id="pagination-prev" 
+                class="modal-btn modal-btn-secondary"
+                style="padding: 4px 12px; font-size: 11px;"
+                disabled
+              >
+                Previous
+              </button>
+              <span id="pagination-pages" style="font-size: 11px; color: var(--text-medium);"></span>
+              <button 
+                type="button" 
+                id="pagination-next" 
+                class="modal-btn modal-btn-secondary"
+                style="padding: 4px 12px; font-size: 11px;"
+                disabled
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </section>
+
+      <!-- Zones without coordinates section -->
+      <div class="card" id="zones-without-coords-card" style="display: none; margin-top: 20px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">⚠️ Zones Without Coordinates</div>
+            <div class="card-sub">These zones cannot be displayed on the map. Click "Add Coordinates" and then click on the map to set their location.</div>
+          </div>
+        </div>
+        <table id="zones-without-coords-table">
+          <thead>
+            <tr>
+              <th>Zone ID</th>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="zones-without-coords-tbody">
+            <!-- Zones will be inserted here -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -726,19 +1136,573 @@
       critical: { status: "Critical", color: "red", defaultLoad: 95 },
     };
 
-    // Existing sample zones (initial overlay)
-    const CROWDING_ZONES = [
-      { id: 1, name: "Har Ki Pauri – Sector A", status: "Critical", color: "red", load: 94, lat: 29.9576, lng: 78.1712 },
-      { id: 2, name: "Main Bazaar – Gate 3", status: "High", color: "red", load: 88, lat: 29.95, lng: 78.16 },
-      { id: 3, name: "VIP Ghat – Sector C", status: "Busy", color: "yellow", load: 71, lat: 29.965, lng: 78.185 },
-      { id: 4, name: "Parking P3 – Ingress", status: "Queueing", color: "yellow", load: 69, lat: 29.935, lng: 78.155 },
-      { id: 5, name: "Bridge Corridor – Gate 3", status: "Slow", color: "yellow", load: 63, lat: 29.98, lng: 78.19 },
-    ];
+    // Store zones from backend
+    let zonesFromBackend = [];
+    let zoneLayers = []; // Store all map layers for zones
+    let zoneLayerMap = new Map(); // Map layer -> zone ID
+
+    // Modal system
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modal-title-text');
+    const modalIcon = document.getElementById('modal-icon');
+    const modalBody = document.getElementById('modal-body');
+    const modalFooter = document.getElementById('modal-footer');
+    const modalClose = document.getElementById('modal-close');
+
+    function showModal(title, message, icon = '⚠️', buttons = []) {
+      modalTitle.textContent = title;
+      modalIcon.textContent = icon;
+      modalBody.textContent = message;
+      
+      modalFooter.innerHTML = '';
+      if (buttons.length === 0) {
+        // Default OK button
+        const okBtn = document.createElement('button');
+        okBtn.className = 'modal-btn modal-btn-primary';
+        okBtn.textContent = 'OK';
+        okBtn.onclick = hideModal;
+        modalFooter.appendChild(okBtn);
+      } else {
+        buttons.forEach(btn => {
+          const button = document.createElement('button');
+          button.className = `modal-btn ${btn.class || 'modal-btn-primary'}`;
+          button.textContent = btn.text;
+          button.onclick = () => {
+            if (btn.onClick) btn.onClick();
+            if (btn.close !== false) hideModal();
+          };
+          modalFooter.appendChild(button);
+        });
+      }
+      
+      modalOverlay.classList.add('active');
+    }
+
+    function hideModal() {
+      modalOverlay.classList.remove('active');
+    }
+
+    function showConfirm(title, message, onConfirm, onCancel = null) {
+      showModal(
+        title,
+        message,
+        '❓',
+        [
+          {
+            text: 'Cancel',
+            class: 'modal-btn-secondary',
+            onClick: onCancel,
+            close: true
+          },
+          {
+            text: 'Confirm',
+            class: 'modal-btn-primary',
+            onClick: onConfirm,
+            close: true
+          }
+        ]
+      );
+    }
+
+    // Close modal on overlay click or close button
+    if (modalClose) {
+      modalClose.addEventListener('click', hideModal);
+    }
+    if (modalOverlay) {
+      modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) {
+          hideModal();
+        }
+      });
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && modalOverlay && modalOverlay.classList.contains('active')) {
+        hideModal();
+      }
+    });
+
+    // API functions for zone CRUD operations
+    async function createZone(zoneData) {
+      try {
+        console.log('Sending zone data to API:', zoneData);
+        const response = await fetch('/api/zones/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+          },
+          body: JSON.stringify(zoneData)
+        });
+        
+        const responseData = await response.json();
+        console.log('API Response status:', response.status);
+        console.log('API Response data:', responseData);
+        
+        if (!response.ok) {
+          console.error('API Error:', responseData);
+          throw new Error(responseData.detail || JSON.stringify(responseData) || 'Failed to create zone');
+        }
+        return responseData;
+      } catch (error) {
+        console.error('Error creating zone:', error);
+        throw error;
+      }
+    }
+
+    async function updateZone(zoneId, zoneData) {
+      try {
+        console.log(`Updating zone ${zoneId} with data:`, zoneData);
+        const response = await fetch(`/api/zones/${zoneId}/`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+          },
+          body: JSON.stringify(zoneData)
+        });
+        
+        const responseData = await response.json();
+        console.log('Update API Response status:', response.status);
+        console.log('Update API Response data:', responseData);
+        
+        if (!response.ok) {
+          console.error('API Error:', responseData);
+          const errorMsg = responseData.detail || JSON.stringify(responseData) || 'Failed to update zone';
+          throw new Error(errorMsg);
+        }
+        return responseData;
+      } catch (error) {
+        console.error('Error updating zone:', error);
+        throw error;
+      }
+    }
+
+    async function deleteZone(zoneId) {
+      try {
+        const response = await fetch(`/api/zones/${zoneId}/`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRFToken': getCsrfToken()
+          }
+        });
+        if (!response.ok) {
+          throw new Error('Failed to delete zone');
+        }
+        return true;
+      } catch (error) {
+        console.error('Error deleting zone:', error);
+        throw error;
+      }
+    }
+
+    function getCsrfToken() {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+          return value;
+        }
+      }
+      return '';
+    }
+
+    // Fetch zones from backend API
+    async function fetchZones() {
+      try {
+        const response = await fetch('/api/zones/');
+        if (!response.ok) {
+          throw new Error('Failed to fetch zones');
+        }
+        const data = await response.json();
+        zonesFromBackend = data.results || [];
+        console.log(`API Response - Total count: ${data.count || zonesFromBackend.length}, Results: ${zonesFromBackend.length}`);
+        console.log('All zones from API:', zonesFromBackend);
+        
+        // Log zones without coordinates
+        const zonesWithoutCoords = zonesFromBackend.filter(z => !z.lat && !z.lng && (!z.polygon || !Array.isArray(z.polygon) || z.polygon.length === 0));
+        if (zonesWithoutCoords.length > 0) {
+          console.warn('Zones without coordinates:', zonesWithoutCoords.map(z => ({ id: z.id, name: z.name })));
+        }
+        
+        renderZonesOnMap();
+        updateSnapshotTable();
+        updateZoneCount();
+        updateZonesWithoutCoords();
+      } catch (error) {
+        console.error('Error fetching zones:', error);
+        // Show error message to user
+        const errorMsg = document.createElement('div');
+        errorMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #fee2e2; color: #b91c1c; padding: 12px 16px; border-radius: 8px; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+        errorMsg.textContent = 'Failed to load zones from backend. Please refresh the page.';
+        document.body.appendChild(errorMsg);
+        setTimeout(() => errorMsg.remove(), 5000);
+      }
+    }
+
+    // Render zones on the map
+    function renderZonesOnMap() {
+      // Clear existing zones
+      zoneLayers.forEach(layer => {
+        czMap.removeLayer(layer);
+      });
+      zoneLayers = [];
+      zoneLayerMap.clear();
+
+      let renderedCount = 0;
+      let skippedCount = 0;
+
+      zonesFromBackend.forEach((zone) => {
+        const color = getCrowdColor(zone.color || zone.color_code);
+        const capacity = zone.capacity || 0;
+        const status = zone.status || 'safe';
+
+        if (zone.polygon && Array.isArray(zone.polygon) && zone.polygon.length > 0) {
+          // Render polygon zone
+          try {
+            // Validate polygon coordinates
+            const polygonCoords = zone.polygon
+              .filter(coord => Array.isArray(coord) && coord.length >= 2)
+              .map(coord => [parseFloat(coord[0]), parseFloat(coord[1])])
+              .filter(coord => !isNaN(coord[0]) && !isNaN(coord[1]));
+            
+            if (polygonCoords.length < 3) {
+              console.warn(`Zone ${zone.id} has invalid polygon (less than 3 valid points)`);
+              skippedCount++;
+              return;
+            }
+            
+            const polygon = L.polygon(polygonCoords, {
+              color,
+              fillColor: color,
+              fillOpacity: 0.35,
+              weight: 2,
+            });
+            
+            if (!polygon) {
+              console.error(`Failed to create polygon for zone ${zone.id}`);
+              skippedCount++;
+              return;
+            }
+            
+            polygon.addTo(czMap);
+            attachPolygonPopup(polygon, zone.name, status, zone.id);
+            polygon.on("click", function (evt) {
+              L.DomEvent.stopPropagation(evt);
+              polygon.openPopup();
+            });
+            zoneLayers.push(polygon);
+            zoneLayerMap.set(polygon, zone.id);
+            renderedCount++;
+          } catch (error) {
+            console.error(`Failed to render polygon zone ${zone.id}:`, error);
+            skippedCount++;
+          }
+        } else if (zone.lat && zone.lng) {
+          // Render circle zone
+          const lat = parseFloat(zone.lat);
+          const lng = parseFloat(zone.lng);
+          
+          if (!isNaN(lat) && !isNaN(lng)) {
+            try {
+              const circle = L.circle([lat, lng], {
+                color,
+                fillColor: color,
+                fillOpacity: 0.35,
+                radius: 150 + capacity * 5,
+                weight: 1,
+              }).addTo(czMap);
+
+              attachResizablePopup(circle, zone.name, status, capacity, zone.id);
+              circle.on("click", function (evt) {
+                L.DomEvent.stopPropagation(evt);
+                circle.openPopup();
+              });
+              zoneLayers.push(circle);
+              zoneLayerMap.set(circle, zone.id);
+              renderedCount++;
+            } catch (error) {
+              console.error(`Failed to render circle zone ${zone.id}:`, error);
+              skippedCount++;
+            }
+          } else {
+            console.warn(`Zone ${zone.id} has invalid coordinates: lat=${zone.lat}, lng=${zone.lng}`);
+            skippedCount++;
+          }
+        } else {
+          console.warn(`Zone ${zone.id} (${zone.name}) has no coordinates or polygon`);
+          skippedCount++;
+        }
+      });
+
+      console.log(`Total zones: ${zonesFromBackend.length}, Rendered: ${renderedCount}, Skipped: ${skippedCount}`);
+      
+      // Show warning if zones were skipped
+      if (skippedCount > 0) {
+        console.warn(`${skippedCount} zones were skipped. Check console for details.`);
+        // Show a notification to the user
+        const warningMsg = document.createElement('div');
+        warningMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #fef3c7; color: #92400e; padding: 12px 16px; border-radius: 8px; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 300px;';
+        warningMsg.innerHTML = `<strong>Warning:</strong> ${skippedCount} zone(s) could not be displayed. Check browser console for details.`;
+        document.body.appendChild(warningMsg);
+        setTimeout(() => warningMsg.remove(), 8000);
+      }
+      
+      // Fit map to show all zones if there are any
+      if (zoneLayers.length > 0) {
+        try {
+          const group = new L.featureGroup(zoneLayers);
+          czMap.fitBounds(group.getBounds().pad(0.1));
+        } catch (error) {
+          console.error('Error fitting bounds:', error);
+        }
+      }
+    }
+
+    // Pagination state
+    let currentPage = 1;
+    const recordsPerPage = 10;
+
+    // Update snapshot table with real data
+    function updateSnapshotTable(page = 1) {
+      const tableBody = document.querySelector('#snapshot-table tbody');
+      const paginationDiv = document.getElementById('snapshot-pagination');
+      const paginationInfo = document.getElementById('pagination-info');
+      const paginationPages = document.getElementById('pagination-pages');
+      const prevBtn = document.getElementById('pagination-prev');
+      const nextBtn = document.getElementById('pagination-next');
+      
+      if (!tableBody) return;
+
+      // Clear existing rows
+      tableBody.innerHTML = '';
+
+      // Sort zones by capacity (highest first)
+      // Only show zones that have coordinates (can be displayed on map)
+      const zonesWithCoords = zonesFromBackend.filter(z => 
+        (z.lat && z.lng) || (z.polygon && Array.isArray(z.polygon) && z.polygon.length > 0)
+      );
+      const sortedZones = [...zonesWithCoords]
+        .sort((a, b) => (b.capacity || 0) - (a.capacity || 0));
+
+      const totalZones = sortedZones.length;
+      const totalPages = Math.ceil(totalZones / recordsPerPage);
+      currentPage = Math.max(1, Math.min(page, totalPages));
+
+      if (sortedZones.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="3" style="text-align: center; color: var(--text-light); padding: 20px;">No zones found</td>';
+        tableBody.appendChild(row);
+        if (paginationDiv) paginationDiv.style.display = 'none';
+        return;
+      }
+
+      // Calculate pagination
+      const startIndex = (currentPage - 1) * recordsPerPage;
+      const endIndex = Math.min(startIndex + recordsPerPage, totalZones);
+      const paginatedZones = sortedZones.slice(startIndex, endIndex);
+
+      // Render zones for current page
+      paginatedZones.forEach((zone) => {
+        const row = document.createElement('tr');
+        const status = zone.status || 'safe';
+        const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+        const badgeClass = status === 'critical' || status === 'high' ? 'badge-red' : 
+                          status === 'moderate' ? 'badge-yellow' : 'badge-green';
+        
+        row.innerHTML = `
+          <td>${zone.name || 'Unnamed Zone'}</td>
+          <td><span class="badge ${badgeClass}">${statusText}</span></td>
+          <td>${zone.capacity || 0}%</td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      // Update pagination controls
+      if (paginationDiv) {
+        if (totalZones > recordsPerPage) {
+          paginationDiv.style.display = 'flex';
+          paginationDiv.style.justifyContent = 'space-between';
+          paginationDiv.style.alignItems = 'center';
+          paginationDiv.style.gap = '12px';
+        } else {
+          paginationDiv.style.display = 'none';
+        }
+        
+        if (paginationInfo) {
+          paginationInfo.textContent = `Showing ${startIndex + 1}-${endIndex} of ${totalZones}`;
+        }
+        
+        if (prevBtn) {
+          prevBtn.disabled = currentPage === 1;
+          prevBtn.onclick = () => {
+            if (currentPage > 1) {
+              updateSnapshotTable(currentPage - 1);
+            }
+          };
+        }
+        
+        if (nextBtn) {
+          nextBtn.disabled = currentPage === totalPages;
+          nextBtn.onclick = () => {
+            if (currentPage < totalPages) {
+              updateSnapshotTable(currentPage + 1);
+            }
+          };
+        }
+        
+        if (paginationPages && totalPages > 0) {
+          paginationPages.textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+      }
+    }
+
+    // Update zone count in the pill
+    function updateZoneCount() {
+      const highCriticalZones = zonesFromBackend.filter(z => 
+        z.status === 'high' || z.status === 'critical'
+      ).length;
+      
+      const pillText = document.querySelector('.pill span:last-child');
+      if (pillText) {
+        pillText.textContent = `${highCriticalZones} zones in high / critical state`;
+      }
+    }
+
+    // Display zones without coordinates
+    function updateZonesWithoutCoords() {
+      const zonesWithoutCoords = zonesFromBackend.filter(z => 
+        !z.lat && !z.lng && (!z.polygon || !Array.isArray(z.polygon) || z.polygon.length === 0)
+      );
+      
+      const card = document.getElementById('zones-without-coords-card');
+      const tbody = document.getElementById('zones-without-coords-tbody');
+      
+      if (!card || !tbody) return;
+      
+      if (zonesWithoutCoords.length === 0) {
+        card.style.display = 'none';
+        return;
+      }
+      
+      card.style.display = 'block';
+      tbody.innerHTML = '';
+      
+      zonesWithoutCoords.forEach((zone) => {
+        const row = document.createElement('tr');
+        const status = zone.status || 'safe';
+        const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+        const badgeClass = status === 'critical' || status === 'high' ? 'badge-red' : 
+                          status === 'moderate' ? 'badge-yellow' : 'badge-green';
+        
+        row.innerHTML = `
+          <td>${zone.id}</td>
+          <td>${zone.name || 'Unnamed Zone'}</td>
+          <td><span class="badge ${badgeClass}">${statusText}</span></td>
+          <td style="display: flex; gap: 8px;">
+            <button 
+              type="button" 
+              class="modal-btn modal-btn-primary" 
+              style="padding: 4px 12px; font-size: 11px;"
+              onclick="addCoordinatesToZone(${zone.id}, '${zone.name || 'Unnamed Zone'}')"
+            >
+              Add Coordinates
+            </button>
+            <button 
+              type="button" 
+              class="modal-btn modal-btn-secondary" 
+              style="padding: 4px 12px; font-size: 11px;"
+              onclick="deleteZoneWithoutCoords(${zone.id})"
+            >
+              Delete
+            </button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Add coordinates to a zone by clicking on map
+    let pendingZoneToUpdate = null;
+    let pendingZoneName = null;
+
+    window.addCoordinatesToZone = function(zoneId, zoneName) {
+      pendingZoneToUpdate = zoneId;
+      pendingZoneName = zoneName;
+      
+      showModal(
+        'Add Coordinates',
+        `Click on the map to set the location for "${zoneName}". The zone will be created as a circle at that point.`,
+        '📍',
+        [
+          {
+            text: 'Cancel',
+            class: 'modal-btn-secondary',
+            onClick: () => {
+              pendingZoneToUpdate = null;
+              pendingZoneName = null;
+            },
+            close: true
+          }
+        ]
+      );
+
+      // Enable map click mode
+      czMap.once('click', async function(e) {
+        if (pendingZoneToUpdate) {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+          
+          try {
+            // Update zone with coordinates
+            // Format coordinates to max 6 decimal places
+            const formattedLat = parseFloat(lat.toFixed(6));
+            const formattedLng = parseFloat(lng.toFixed(6));
+            
+            await updateZone(pendingZoneToUpdate, {
+              zone_type: 'circle',
+              latitude: formattedLat,
+              longitude: formattedLng
+            });
+            
+            showModal('Success', `Coordinates added to "${pendingZoneName}". The zone will now appear on the map.`, '✅');
+            fetchZones(); // Refresh zones
+            pendingZoneToUpdate = null;
+            pendingZoneName = null;
+          } catch (error) {
+            console.error('Failed to update zone:', error);
+            showModal('Error', 'Failed to add coordinates. Please try again.', '❌');
+          }
+        }
+      });
+    };
+
+    // Delete zone without coordinates
+    window.deleteZoneWithoutCoords = async function(zoneId) {
+      showConfirm(
+        'Delete Zone',
+        `Are you sure you want to delete zone #${zoneId}? This action cannot be undone.`,
+        async () => {
+          try {
+            await deleteZone(zoneId);
+            showModal('Success', 'Zone deleted successfully.', '✅');
+            fetchZones(); // Refresh zones
+          } catch (error) {
+            showModal('Error', 'Failed to delete zone. Please try again.', '❌');
+          }
+        }
+      );
+    };
 
     // Helper to attach a radius slider inside the circle popup itself
-    function attachResizablePopup(circle, label, statusText, initialLoad) {
+    function attachResizablePopup(circle, label, statusText, initialLoad, zoneId = null) {
       const baseRadius = 150 + initialLoad * 5;
       circle.setRadius(baseRadius);
+      if (zoneId) {
+        zoneLayerMap.set(circle, zoneId);
+      }
 
       const container = document.createElement("div");
       container.style.fontSize = "12px";
@@ -793,6 +1757,10 @@
       slider.style.width = "100%";
       container.appendChild(slider);
 
+      let updateTimeout;
+      let isUpdating = false;
+      let lastRadius = baseRadius;
+      
       slider.addEventListener("input", function () {
         const r = Number(this.value);
         circle.setRadius(r);
@@ -800,19 +1768,109 @@
         if (display) {
           display.textContent = `~${Math.round(r)} m`;
         }
+        
+        // Update zone in backend (debounced)
+        if (zoneId && !isUpdating) {
+          clearTimeout(updateTimeout);
+          updateTimeout = setTimeout(async () => {
+            if (r === lastRadius) {
+              console.log('Radius unchanged, skipping update');
+              return; // No change
+            }
+            
+            console.log(`Updating zone ${zoneId}: radius ${lastRadius} -> ${r}`);
+            isUpdating = true;
+            const center = circle.getLatLng();
+            const capacity = Math.min(100, Math.max(0, Math.round((r - 150) / 5)));
+            // Format coordinates to max 6 decimal places
+            const formattedLat = parseFloat(center.lat.toFixed(6));
+            const formattedLng = parseFloat(center.lng.toFixed(6));
+            
+            console.log(`Updating zone with: lat=${formattedLat}, lng=${formattedLng}, capacity=${capacity}`);
+            
+            try {
+              const updatedZone = await updateZone(zoneId, {
+                latitude: formattedLat,
+                longitude: formattedLng,
+                capacity: capacity
+              });
+              
+              console.log('Zone updated successfully:', updatedZone);
+              lastRadius = r;
+              
+              // Show confirmation modal
+              showModal(
+                'Zone Updated',
+                `Zone radius has been updated successfully.\n\nNew radius: ~${Math.round(r)} m\nNew capacity: ${capacity}%`,
+                '✅',
+                [
+                  {
+                    text: 'OK',
+                    class: 'modal-btn-primary',
+                    close: true
+                  }
+                ]
+              );
+            } catch (error) {
+              console.error('Failed to update zone:', error);
+              const errorMsg = error.message || 'Failed to update zone. Please try again.';
+              showModal('Error', errorMsg, '❌');
+              // Revert radius on error
+              circle.setRadius(lastRadius);
+              slider.value = String(lastRadius);
+              if (display) {
+                display.textContent = `~${Math.round(lastRadius)} m`;
+              }
+            } finally {
+              isUpdating = false;
+            }
+          }, 1500); // Wait 1.5 seconds after user stops dragging
+        } else if (!zoneId) {
+          console.warn('Cannot update zone: zoneId is null');
+        }
       });
 
-      removeBtn.addEventListener("click", function (evt) {
+      removeBtn.addEventListener("click", async function (evt) {
         evt.preventDefault();
         evt.stopPropagation();
-        circle.removeFrom(circle._map || czMap);
+        
+        if (zoneId) {
+          showConfirm(
+            'Delete Zone',
+            'Are you sure you want to delete this zone? This action cannot be undone.',
+            async () => {
+              try {
+                await deleteZone(zoneId);
+                circle.removeFrom(circle._map || czMap);
+                zoneLayerMap.delete(circle);
+                zoneLayers = zoneLayers.filter(l => l !== circle);
+                fetchZones(); // Refresh zones and table
+                showModal('Success', 'Zone deleted successfully.', '✅');
+              } catch (error) {
+                showModal('Error', 'Failed to delete zone. Please try again.', '❌');
+              }
+            }
+          );
+        } else {
+          circle.removeFrom(circle._map || czMap);
+          zoneLayerMap.delete(circle);
+          zoneLayers = zoneLayers.filter(l => l !== circle);
+        }
       });
 
       circle.bindPopup(container);
     }
 
     // Helper to attach an area summary + resize control inside a polygon popup
-    function attachPolygonPopup(polygon, label, statusText) {
+    function attachPolygonPopup(polygon, label, statusText, zoneId = null) {
+      if (!polygon) {
+        console.error('Cannot attach popup: polygon is null');
+        return;
+      }
+      
+      if (zoneId) {
+        zoneLayerMap.set(polygon, zoneId);
+      }
       const container = document.createElement("div");
       container.style.fontSize = "12px";
       container.style.minWidth = "180px";
@@ -828,7 +1886,25 @@
       statusLine.textContent = `Status: ${statusText}`;
       container.appendChild(statusLine);
 
-      const latLngs = (polygon.getLatLngs()[0] || polygon.getLatLngs()).slice();
+      // Safely get polygon coordinates
+      let latLngs = [];
+      try {
+        if (polygon && polygon.getLatLngs) {
+          const coords = polygon.getLatLngs();
+          latLngs = (coords[0] || coords).slice();
+        } else {
+          console.error('Polygon does not have getLatLngs method');
+          return;
+        }
+      } catch (error) {
+        console.error('Error getting polygon coordinates:', error);
+        return;
+      }
+      
+      if (!latLngs || latLngs.length === 0) {
+        console.error('Polygon has no coordinates');
+        return;
+      }
 
       function computeAreaText(latLngArray) {
         const pts = latLngArray.map((ll) => L.CRS.EPSG3857.project(ll));
@@ -873,25 +1949,100 @@
 
       container.appendChild(resizeRow);
 
+      let currentLatLngs = latLngs;
+      
       function scalePolygon(percent) {
-        const factor = percent / 100;
-        // centroid in lat/lng
-        const centerLat =
-          latLngs.reduce((sum, p) => sum + p.lat, 0) / latLngs.length;
-        const centerLng =
-          latLngs.reduce((sum, p) => sum + p.lng, 0) / latLngs.length;
+        if (!polygon || !polygon.getLatLngs) {
+          console.error('Cannot scale polygon: polygon is null or invalid');
+          return;
+        }
+        
+        try {
+          const factor = percent / 100;
+          // Get current coordinates
+          const coords = polygon.getLatLngs();
+          if (!coords || (Array.isArray(coords[0]) && coords[0].length === 0)) {
+            console.error('Polygon has no valid coordinates');
+            return;
+          }
+          
+          const current = coords[0] || coords;
+          if (!current || current.length === 0) {
+            console.error('Polygon coordinates are empty');
+            return;
+          }
+          
+          // centroid in lat/lng
+          const centerLat = current.reduce((sum, p) => sum + p.lat, 0) / current.length;
+          const centerLng = current.reduce((sum, p) => sum + p.lng, 0) / current.length;
 
-        const scaled = latLngs.map((p) => ({
-          lat: centerLat + (p.lat - centerLat) * factor,
-          lng: centerLng + (p.lng - centerLng) * factor,
-        }));
+          const scaled = current.map((p) => ({
+            lat: centerLat + (p.lat - centerLat) * factor,
+            lng: centerLng + (p.lng - centerLng) * factor,
+          }));
 
-        polygon.setLatLngs(scaled);
-        areaLine.textContent = `Area ≈ ${computeAreaText(scaled)}`;
+          polygon.setLatLngs(scaled);
+          currentLatLngs = scaled;
+          areaLine.textContent = `Area ≈ ${computeAreaText(scaled)}`;
+        } catch (error) {
+          console.error('Error scaling polygon:', error);
+        }
       }
 
+      let updateTimeout;
       resizeSlider.addEventListener("input", function () {
         scalePolygon(Number(this.value));
+        
+        // Update zone in backend (debounced)
+        if (zoneId) {
+          clearTimeout(updateTimeout);
+          updateTimeout = setTimeout(async () => {
+            if (!polygon || !polygon.getLatLngs) {
+              console.error('Cannot update zone: polygon is null or invalid');
+              return;
+            }
+            
+            try {
+              const coords = polygon.getLatLngs();
+              if (!coords || (Array.isArray(coords[0]) && coords[0].length === 0)) {
+                console.error('Polygon has no valid coordinates');
+                return;
+              }
+              
+              const currentCoords = coords[0] || coords;
+              if (!currentCoords || currentCoords.length === 0) {
+                console.error('Polygon coordinates are empty');
+                return;
+              }
+              
+              const polygonCoords = currentCoords.map(ll => [ll.lat, ll.lng]);
+              
+              console.log(`Updating polygon zone ${zoneId} with ${polygonCoords.length} points`);
+              
+              await updateZone(zoneId, {
+                polygon: polygonCoords
+              });
+              
+              // Show confirmation modal
+              showModal(
+                'Zone Updated',
+                `Polygon zone has been updated successfully.\n\nPoints: ${polygonCoords.length}`,
+                '✅',
+                [
+                  {
+                    text: 'OK',
+                    class: 'modal-btn-primary',
+                    close: true
+                  }
+                ]
+              );
+            } catch (error) {
+              console.error('Failed to update zone:', error);
+              const errorMsg = error.message || 'Failed to update zone. Please try again.';
+              showModal('Error', errorMsg, '❌');
+            }
+          }, 1500); // Wait 1.5 seconds after user stops dragging
+        }
       });
 
       const removeBtn = document.createElement("button");
@@ -906,34 +2057,38 @@
       removeBtn.style.cursor = "pointer";
       container.appendChild(removeBtn);
 
-      removeBtn.addEventListener("click", function (evt) {
+      removeBtn.addEventListener("click", async function (evt) {
         evt.preventDefault();
         evt.stopPropagation();
-        polygon.removeFrom(polygon._map || czMap);
+        
+        if (zoneId) {
+          showConfirm(
+            'Delete Zone',
+            'Are you sure you want to delete this zone? This action cannot be undone.',
+            async () => {
+              try {
+                await deleteZone(zoneId);
+                polygon.removeFrom(polygon._map || czMap);
+                zoneLayerMap.delete(polygon);
+                zoneLayers = zoneLayers.filter(l => l !== polygon);
+                fetchZones(); // Refresh zones and table
+                showModal('Success', 'Zone deleted successfully.', '✅');
+              } catch (error) {
+                showModal('Error', 'Failed to delete zone. Please try again.', '❌');
+              }
+            }
+          );
+        } else {
+          polygon.removeFrom(polygon._map || czMap);
+          zoneLayerMap.delete(polygon);
+          zoneLayers = zoneLayers.filter(l => l !== polygon);
+        }
       });
 
       polygon.bindPopup(container);
     }
 
-    // Render initial sample zones and make them individually resizable via their own popup
-    CROWDING_ZONES.forEach((zone) => {
-      const color = getCrowdColor(zone.color);
-      const circle = L.circle([zone.lat, zone.lng], {
-        color,
-        fillColor: color,
-        fillOpacity: 0.35,
-        radius: 150 + zone.load * 5,
-        weight: 1,
-      }).addTo(czMap);
-
-      attachResizablePopup(circle, zone.name, zone.status, zone.load);
-
-      circle.on("click", function (evt) {
-        // Do not trigger map click when interacting with a circle
-        L.DomEvent.stopPropagation(evt);
-        circle.openPopup();
-      });
-    });
+    // Zones will be rendered via fetchZones() function
 
     // Fixed picker panel DOM references
     const pickerPanel = document.getElementById("crowd-picker-panel");
@@ -966,6 +2121,12 @@
     // When admin clicks on the map, either add polygon points (polygon mode)
     // or show circle-based picker card (default mode)
     czMap.on("click", function (e) {
+      // Check if we're in "add coordinates" mode
+      if (pendingZoneToUpdate) {
+        // This is handled by the once() listener in addCoordinatesToZone
+        return;
+      }
+      
       if (polygonMode) {
         polygonPoints.push(e.latlng);
 
@@ -1031,11 +2192,58 @@
             fillColor: color,
             fillOpacity: 0.35,
           });
-          attachPolygonPopup(draftPolygon, name, cfg.status);
-          draftPolygon.on("click", function (clickEvt) {
-            L.DomEvent.stopPropagation(clickEvt);
-            draftPolygon.openPopup();
+          
+          // Save polygon to backend
+          const polygonCoords = polygonPoints.map(p => [p.lat, p.lng]);
+          const zoneData = {
+            name: name,
+            status: levelKey,
+            color: cfg.color,
+            zone_type: 'polygon',
+            capacity: load,
+            polygon: polygonCoords
+          };
+          
+          console.log('Creating polygon zone with data:', zoneData);
+          
+          createZone(zoneData).then(savedZone => {
+            console.log('Polygon zone created successfully:', savedZone);
+            
+            // Validate draftPolygon before attaching popup
+            if (!draftPolygon || !draftPolygon.getLatLngs) {
+              console.error('Draft polygon is invalid, cannot attach popup');
+              showModal('Warning', 'Zone was saved but popup could not be attached. Please refresh the page.', '⚠️');
+              fetchZones(); // Refresh zones and table
+              resetDraftPolygon();
+              return;
+            }
+            
+            attachPolygonPopup(draftPolygon, name, cfg.status, savedZone.id);
+            zoneLayers.push(draftPolygon);
+            zoneLayerMap.set(draftPolygon, savedZone.id);
+            
+            draftPolygon.on("click", function (clickEvt) {
+              L.DomEvent.stopPropagation(clickEvt);
+              if (draftPolygon && draftPolygon.openPopup) {
+                draftPolygon.openPopup();
+              }
+            });
+            
+            fetchZones(); // Refresh zones and table
+            showModal('Success', 'Polygon zone created successfully!', '✅');
+            resetDraftPolygon(); // Clear draft state
+          }).catch(error => {
+            console.error('Failed to save polygon zone:', error);
+            const errorMsg = error.message || 'Failed to save zone. Please try again.';
+            showModal('Error', errorMsg, '❌');
+            // Clean up draft polygon on error
+            if (draftPolygon) {
+              czMap.removeLayer(draftPolygon);
+              draftPolygon = null;
+            }
+            polygonPoints = [];
           });
+          
           // Ready for new polygon; keep polygon mode on
           draftPolygon = null;
           polygonPoints = [];
@@ -1055,7 +2263,36 @@
           weight: 1,
         }).addTo(czMap);
 
-        attachResizablePopup(circle, name, cfg.status, load);
+        // Save circle zone to backend
+        // Format coordinates to max 6 decimal places (9 digits total: 3 for integer part + 6 decimal)
+        const lat = parseFloat(lastClickLatLng.lat.toFixed(6));
+        const lng = parseFloat(lastClickLatLng.lng.toFixed(6));
+        
+        const zoneData = {
+          name: name,
+          status: levelKey,
+          color: cfg.color,
+          zone_type: 'circle',
+          capacity: load,
+          latitude: lat,
+          longitude: lng
+        };
+        
+        console.log('Creating circle zone with data:', zoneData);
+        
+        createZone(zoneData).then(savedZone => {
+          console.log('Zone created successfully:', savedZone);
+          attachResizablePopup(circle, name, cfg.status, load, savedZone.id);
+          zoneLayers.push(circle);
+          zoneLayerMap.set(circle, savedZone.id);
+          fetchZones(); // Refresh zones and table
+          showModal('Success', 'Circle zone created successfully!', '✅');
+        }).catch(error => {
+          console.error('Failed to save circle zone:', error);
+          const errorMsg = error.message || 'Failed to save zone. Please try again.';
+          showModal('Error', errorMsg, '❌');
+          circle.removeFrom(czMap);
+        });
 
         circle.on("click", function (clickEvt) {
           L.DomEvent.stopPropagation(clickEvt);
@@ -1065,16 +2302,298 @@
       });
     });
 
-    // Bottom-left toggle button to enable/disable polygon drawing mode
+    // Toggle button to switch between circle and polygon drawing mode
     if (polygonToggle) {
       polygonToggle.addEventListener("click", function (evt) {
         evt.preventDefault();
         polygonMode = !polygonMode;
         polygonToggle.classList.toggle("active", polygonMode);
+        
+        // Update button text and icon
+        const modeIcon = document.getElementById("zone-mode-icon");
+        const modeText = document.getElementById("zone-mode-text");
+        if (polygonMode) {
+          modeIcon.textContent = "🔷";
+          modeText.textContent = "Polygon Mode";
+        } else {
+          modeIcon.textContent = "⭕";
+          modeText.textContent = "Circle Mode";
+        }
+        
         hidePickerPanel();
         resetDraftPolygon();
       });
     }
+
+    // Guided Tour System
+    const tourSteps = [
+      {
+        target: null,
+        title: "Welcome to Crowding Zones",
+        icon: "👋",
+        content: "This guided tour will show you how to manage crowding zones on the map. You'll learn to add circles, create polygons, and save zones permanently.",
+        position: "center"
+      },
+      {
+        target: "#tour-legend",
+        title: "Zone Status Legend",
+        icon: "🎨",
+        content: "The legend shows the four crowd levels: <strong>Safe</strong> (green), <strong>Busy</strong> (yellow), <strong>High</strong> (orange), and <strong>Critical</strong> (red). Zones on the map use these colors to indicate congestion levels.",
+        position: "bottom"
+      },
+      {
+        target: ".tour-map",
+        title: "Interactive Map",
+        icon: "🗺️",
+        content: "This is the main map where you'll add and manage zones. <strong>Click anywhere on the map</strong> to add a circular zone. A panel will appear at the bottom-right where you can select the crowd level.",
+        position: "top"
+      },
+      {
+        target: "#polygon-mode-toggle",
+        title: "Zone Mode Toggle",
+        icon: "🔄",
+        content: "This toggle button switches between <strong>Circle Mode</strong> (default) and <strong>Polygon Mode</strong>. In Circle Mode, click once to create a circular zone. In Polygon Mode, click multiple points to create custom-shaped zones. After placing 4+ points in polygon mode, select a crowd level to finalize.",
+        position: "bottom"
+      },
+      {
+        target: "#crowd-picker-panel",
+        title: "Crowd Level Picker",
+        icon: "📊",
+        content: "When you click on the map, this panel appears. Enter an optional location name, then select a crowd level: <strong>Critical</strong>, <strong>High</strong>, <strong>Moderate</strong>, or <strong>Safe</strong>. The zone will be created immediately.",
+        position: "top",
+        showElement: true
+      },
+      {
+        target: "#tour-snapshot",
+        title: "Crowding Snapshot",
+        icon: "📋",
+        content: "This table shows a summary of key zones and their current status. It helps you quickly identify which areas need attention.",
+        position: "left"
+      },
+      {
+        target: null,
+        title: "Saving Zones Permanently",
+        icon: "💾",
+        content: "Zones created on this map are temporary. To save them permanently:<br><br>1. Go to <strong>Django Admin</strong> → Zones<br>2. Click <strong>Add Zone</strong><br>3. Fill in Name, Status, Color, Capacity<br>4. For circles: Enter Latitude & Longitude<br>5. For polygons: Enter Polygon as JSON: <code>[[lat1, lng1], [lat2, lng2], ...]</code><br><br>You can copy coordinates from zone popups when creating zones in admin.",
+        position: "center"
+      }
+    ];
+
+    let currentStep = 0;
+    let tourActive = false;
+    const tourOverlay = document.getElementById("tour-overlay");
+    const tourTooltip = document.getElementById("tour-tooltip");
+    const tourStartBtn = document.getElementById("tour-start-btn");
+    const tourNextBtn = document.getElementById("tour-next-btn");
+    const tourPrevBtn = document.getElementById("tour-prev-btn");
+    const tourCloseBtn = document.getElementById("tour-close-btn");
+    const tourStepTitle = document.getElementById("tour-step-title");
+    const tourStepContent = document.getElementById("tour-step-content");
+    const tourStepIcon = document.getElementById("tour-step-icon");
+    const tourProgress = document.getElementById("tour-progress");
+
+    function updateTourStep() {
+      const step = tourSteps[currentStep];
+      tourStepIcon.textContent = step.icon;
+      tourStepTitle.textContent = step.title;
+      tourStepContent.innerHTML = step.content;
+      tourProgress.textContent = `Step ${currentStep + 1} of ${tourSteps.length}`;
+
+      // Update button states
+      tourPrevBtn.disabled = currentStep === 0;
+      tourNextBtn.textContent = currentStep === tourSteps.length - 1 ? "Finish" : "Next";
+
+      // Remove previous highlight
+      document.querySelectorAll(".tour-highlight").forEach(el => {
+        el.classList.remove("tour-highlight");
+      });
+
+      // Show/hide elements if needed
+      if (step.showElement && step.target) {
+        const targetEl = document.querySelector(step.target);
+        if (targetEl && targetEl.id === "crowd-picker-panel") {
+          targetEl.style.display = "block";
+          // Set some demo content
+          const latLngEl = document.getElementById("crowd-picker-latlng");
+          if (latLngEl) {
+            latLngEl.textContent = "Lat: 29.94570  |  Lng: 78.16420";
+          }
+        }
+      }
+
+      // Position tooltip
+      if (step.target && document.querySelector(step.target)) {
+        const targetEl = document.querySelector(step.target);
+        targetEl.classList.add("tour-highlight");
+        positionTooltip(targetEl, step.position);
+        scrollToElement(targetEl);
+      } else {
+        // Center tooltip for non-target steps
+        positionTooltip(null, "center");
+      }
+
+      // Show/hide overlay
+      if (step.target) {
+        tourOverlay.classList.add("active");
+      } else {
+        tourOverlay.classList.remove("active");
+      }
+    }
+
+    function positionTooltip(targetEl, position) {
+      if (!targetEl) {
+        // Center on screen
+        tourTooltip.style.top = "50%";
+        tourTooltip.style.left = "50%";
+        tourTooltip.style.transform = "translate(-50%, -50%)";
+        tourTooltip.classList.add("active");
+        return;
+      }
+
+      const rect = targetEl.getBoundingClientRect();
+      const tooltipRect = tourTooltip.getBoundingClientRect();
+      let top, left;
+
+      switch (position) {
+        case "top":
+          top = rect.top - tooltipRect.height - 20;
+          left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+          break;
+        case "bottom":
+          top = rect.bottom + 20;
+          left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+          break;
+        case "left":
+          top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
+          left = rect.left - tooltipRect.width - 20;
+          break;
+        case "right":
+          top = rect.top + (rect.height / 2) - (tooltipRect.height / 2);
+          left = rect.right + 20;
+          break;
+        default:
+          top = rect.bottom + 20;
+          left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+      }
+
+      // Keep tooltip within viewport
+      const padding = 20;
+      if (top < padding) top = padding;
+      if (left < padding) left = padding;
+      if (top + tooltipRect.height > window.innerHeight - padding) {
+        top = window.innerHeight - tooltipRect.height - padding;
+      }
+      if (left + tooltipRect.width > window.innerWidth - padding) {
+        left = window.innerWidth - tooltipRect.width - padding;
+      }
+
+      tourTooltip.style.top = `${top}px`;
+      tourTooltip.style.left = `${left}px`;
+      tourTooltip.style.transform = "none";
+      tourTooltip.classList.add("active");
+    }
+
+    function scrollToElement(element) {
+      const rect = element.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const targetY = rect.top + scrollTop - 100; // 100px offset from top
+
+      window.scrollTo({
+        top: targetY,
+        behavior: "smooth"
+      });
+    }
+
+    function startTour() {
+      if (localStorage.getItem("crowdingZonesTourCompleted") === "true") {
+        showConfirm(
+          'Start Tour Again?',
+          "You've completed this tour before. Would you like to start it again?",
+          () => {
+            tourActive = true;
+            currentStep = 0;
+            updateTourStep();
+            document.body.style.overflow = "hidden";
+          }
+        );
+        return;
+      }
+      tourActive = true;
+      currentStep = 0;
+      updateTourStep();
+      document.body.style.overflow = "hidden";
+    }
+
+    function endTour() {
+      tourActive = false;
+      tourOverlay.classList.remove("active");
+      tourTooltip.classList.remove("active");
+      document.querySelectorAll(".tour-highlight").forEach(el => {
+        el.classList.remove("tour-highlight");
+      });
+      // Hide picker panel if it was shown for tour
+      const pickerPanel = document.getElementById("crowd-picker-panel");
+      if (pickerPanel && !lastClickLatLng) {
+        pickerPanel.style.display = "none";
+      }
+      document.body.style.overflow = "";
+      localStorage.setItem("crowdingZonesTourCompleted", "true");
+    }
+
+    function nextStep() {
+      if (currentStep < tourSteps.length - 1) {
+        currentStep++;
+        updateTourStep();
+      } else {
+        endTour();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep--;
+        updateTourStep();
+      }
+    }
+
+    // Event listeners
+    if (tourStartBtn) {
+      tourStartBtn.addEventListener("click", startTour);
+    }
+
+    if (tourNextBtn) {
+      tourNextBtn.addEventListener("click", nextStep);
+    }
+
+    if (tourPrevBtn) {
+      tourPrevBtn.addEventListener("click", prevStep);
+    }
+
+    if (tourCloseBtn) {
+      tourCloseBtn.addEventListener("click", endTour);
+    }
+
+    // Close on overlay click (optional)
+    tourOverlay.addEventListener("click", function(e) {
+      if (e.target === tourOverlay) {
+        endTour();
+      }
+    });
+
+    // Keyboard navigation
+    document.addEventListener("keydown", function(e) {
+      if (!tourActive) return;
+      if (e.key === "Escape") {
+        endTour();
+      } else if (e.key === "ArrowRight" || e.key === "Enter") {
+        nextStep();
+      } else if (e.key === "ArrowLeft") {
+        prevStep();
+      }
+    });
+
+    // Fetch zones from backend after all functions are defined
+    fetchZones();
   </script>
 </body>
 </html>

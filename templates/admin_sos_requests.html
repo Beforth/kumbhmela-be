@@ -320,51 +320,275 @@
       </header>
 
       <section class="card">
-        <table>
+        <table id="sos-requests-table">
           <thead>
             <tr>
               <th>ID</th>
               <th>Time</th>
+              <th>User</th>
               <th>Location</th>
               <th>Category</th>
               <th>Status</th>
               <th>Assigned Team</th>
-              <th></th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>#SO-1843</td>
-              <td>09:32</td>
-              <td>Har Ki Pauri – Sector A</td>
-              <td>Medical</td>
-              <td><span class="badge badge-red">Open</span></td>
-              <td>Team Alpha</td>
-              <td><a href="#" class="action-link">View</a></td>
-            </tr>
-            <tr>
-              <td>#SO-1842</td>
-              <td>09:18</td>
-              <td>Main Bazaar – Gate 3</td>
-              <td>Crowd</td>
-              <td><span class="badge badge-yellow">In Progress</span></td>
-              <td>Traffic Squad 2</td>
-              <td><a href="#" class="action-link">View</a></td>
-            </tr>
-            <tr>
-              <td>#SO-1839</td>
-              <td>08:55</td>
-              <td>Parking P3</td>
-              <td>Security</td>
-              <td><span class="badge badge-green">Resolved</span></td>
-              <td>Police Unit 4</td>
-              <td><a href="#" class="action-link">View</a></td>
+              <td colspan="8" style="text-align: center; color: var(--text-light); padding: 20px;">Loading SOS requests...</td>
             </tr>
           </tbody>
         </table>
+        
+        <!-- Pagination controls -->
+        <div id="sos-pagination" style="display: none; padding: 12px; border-top: 1px solid var(--border-soft);">
+        </div>
       </section>
     </div>
   </div>
+
+  <script>
+    // Fetch SOS requests from backend
+    let sosRequestsFromBackend = [];
+    let sosCurrentPage = 1;
+    const sosPerPage = 10;
+
+    async function fetchSosRequests() {
+      try {
+        const response = await fetch('/api/sos-requests/');
+        if (!response.ok) {
+          throw new Error('Failed to fetch SOS requests');
+        }
+        const data = await response.json();
+        sosRequestsFromBackend = Array.isArray(data) ? data : (data.results || []);
+        console.log(`Fetched ${sosRequestsFromBackend.length} SOS requests from backend`);
+        updateSosTable();
+        updateSosCount();
+      } catch (error) {
+        console.error('Error fetching SOS requests:', error);
+        const tableBody = document.querySelector('#sos-requests-table tbody');
+        if (tableBody) {
+          tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 20px;">Error loading SOS requests. Please refresh the page.</td></tr>';
+        }
+      }
+    }
+
+    function formatTime(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function updateSosTable(page = 1) {
+      const tableBody = document.querySelector('#sos-requests-table tbody');
+      const paginationDiv = document.getElementById('sos-pagination');
+      
+      if (!tableBody) return;
+
+      // Sort by created_at (newest first)
+      const sortedRequests = [...sosRequestsFromBackend].sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+
+      const totalRequests = sortedRequests.length;
+      const totalPages = Math.ceil(totalRequests / sosPerPage);
+      sosCurrentPage = Math.max(1, Math.min(page, totalPages));
+
+      tableBody.innerHTML = '';
+
+      if (sortedRequests.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-light); padding: 20px;">No SOS requests found</td></tr>';
+        if (paginationDiv) paginationDiv.style.display = 'none';
+        return;
+      }
+
+      // Calculate pagination
+      const startIndex = (sosCurrentPage - 1) * sosPerPage;
+      const endIndex = Math.min(startIndex + sosPerPage, totalRequests);
+      const paginatedRequests = sortedRequests.slice(startIndex, endIndex);
+
+      // Category display names
+      const categoryDisplay = {
+        'medical': 'Medical',
+        'lost': 'Lost Person',
+        'danger': 'In Danger',
+        'crowd': 'Crowd Emergency',
+        'other': 'Other Emergency',
+      };
+
+      // Status badge classes
+      const statusBadgeClass = {
+        'open': 'badge-red',
+        'in_progress': 'badge-yellow',
+        'resolved': 'badge-green',
+        'cancelled': 'badge-blue',
+      };
+
+      // Render requests for current page
+      paginatedRequests.forEach((request) => {
+        const row = document.createElement('tr');
+        const categoryName = categoryDisplay[request.sos_type] || request.sos_type || 'Other';
+        const statusName = request.status_display || request.status || 'Open';
+        const badgeClass = statusBadgeClass[request.status] || 'badge-red';
+        const location = request.lat && request.lng 
+          ? `${parseFloat(request.lat).toFixed(4)}, ${parseFloat(request.lng).toFixed(4)}`
+          : 'N/A';
+        
+        row.innerHTML = `
+          <td>#SO-${request.id}</td>
+          <td>${formatTime(request.created_at)}<br><span style="font-size: 11px; color: var(--text-medium);">${formatDate(request.created_at)}</span></td>
+          <td>${request.user_name || request.user_email || 'Unknown'}</td>
+          <td style="font-size: 11px; color: var(--text-medium);">${location}</td>
+          <td>${categoryName}</td>
+          <td><span class="badge ${badgeClass}">${statusName}</span></td>
+          <td>${request.assigned_team || '-'}</td>
+          <td>
+            <button 
+              type="button" 
+              class="action-link"
+              onclick="updateSosStatus(${request.id}, '${request.status}')"
+            >
+              ${request.status === 'open' ? 'Assign' : request.status === 'in_progress' ? 'Resolve' : 'View'}
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      // Update pagination controls
+      if (paginationDiv) {
+        if (totalRequests > sosPerPage) {
+          paginationDiv.style.display = 'flex';
+          paginationDiv.style.justifyContent = 'space-between';
+          paginationDiv.style.alignItems = 'center';
+          paginationDiv.style.gap = '12px';
+          
+          paginationDiv.innerHTML = `
+            <div style="font-size: 12px; color: var(--text-medium);">
+              <span>Showing ${startIndex + 1}-${endIndex} of ${totalRequests}</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button 
+                type="button" 
+                id="sos-prev" 
+                class="modal-btn modal-btn-secondary"
+                style="padding: 4px 12px; font-size: 11px;"
+                ${sosCurrentPage === 1 ? 'disabled' : ''}
+              >
+                Previous
+              </button>
+              <span style="font-size: 11px; color: var(--text-medium);">Page ${sosCurrentPage} of ${totalPages}</span>
+              <button 
+                type="button" 
+                id="sos-next" 
+                class="modal-btn modal-btn-secondary"
+                style="padding: 4px 12px; font-size: 11px;"
+                ${sosCurrentPage === totalPages ? 'disabled' : ''}
+              >
+                Next
+              </button>
+            </div>
+          `;
+          
+          // Add event listeners
+          const prevBtn = document.getElementById('sos-prev');
+          const nextBtn = document.getElementById('sos-next');
+          
+          if (prevBtn) {
+            prevBtn.onclick = () => {
+              if (sosCurrentPage > 1) {
+                updateSosTable(sosCurrentPage - 1);
+              }
+            };
+          }
+          
+          if (nextBtn) {
+            nextBtn.onclick = () => {
+              if (sosCurrentPage < totalPages) {
+                updateSosTable(sosCurrentPage + 1);
+              }
+            };
+          }
+        } else {
+          paginationDiv.style.display = 'none';
+        }
+      }
+    }
+
+    // Get CSRF token
+    function getCsrfToken() {
+      const name = 'csrftoken';
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // Update SOS status
+    window.updateSosStatus = async function(sosId, currentStatus) {
+      let newStatus = 'in_progress';
+      let team = prompt('Enter team name (optional):');
+      
+      if (currentStatus === 'open') {
+        newStatus = 'in_progress';
+      } else if (currentStatus === 'in_progress') {
+        newStatus = 'resolved';
+      } else {
+        return; // Already resolved or cancelled
+      }
+
+      try {
+        const updateData = { status: newStatus };
+        if (team && team.trim()) {
+          updateData.assigned_team = team.trim();
+        }
+
+        const response = await fetch(`/api/sos-requests/${sosId}/`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+          },
+          body: JSON.stringify(updateData)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Failed to update SOS request');
+        }
+
+        // Refresh table
+        fetchSosRequests();
+      } catch (error) {
+        console.error('Error updating SOS status:', error);
+        alert('Failed to update SOS request: ' + (error.message || 'Please try again.'));
+      }
+    };
+
+    // Update count in pill
+    function updateSosCount() {
+      const openRequests = sosRequestsFromBackend.filter(r => r.status === 'open' || r.status === 'in_progress').length;
+      const pillText = document.querySelector('.pill span:last-child');
+      if (pillText) {
+        pillText.textContent = `${openRequests} active requests`;
+      }
+    }
+
+    // Fetch on page load
+    fetchSosRequests();
+  </script>
 </body>
 </html>
 

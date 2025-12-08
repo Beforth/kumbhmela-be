@@ -7,6 +7,7 @@ from .views import (
     admin_amenities_view,
     admin_crowding_zones_view,
     admin_logout_view,
+    invitation_accept_view,
 )
 
 app_name = 'kumbh'
@@ -21,4 +22,5 @@ urlpatterns = [
     path("dashboard/amenities/", admin_amenities_view, name="admin_amenities"),
     path("dashboard/crowding-zones/", admin_crowding_zones_view, name="admin_crowding_zones"),
     path("logout/", admin_logout_view, name="admin_logout"),
+    path("invite/<str:token>/", invitation_accept_view, name="invitation_accept"),
 ]
