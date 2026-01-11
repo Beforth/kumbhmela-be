@@ -315,7 +315,7 @@
         </div>
         <div class="pill">
           <span style="width: 8px; height: 8px; border-radius: 999px; background: var(--rose);"></span>
-          <span>27 requests in last hour</span>
+          <span>{{ sos_requests|length }} request{{ sos_requests|length|pluralize }}</span>
         </div>
       </header>
 
@@ -334,9 +334,50 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td colspan="8" style="text-align: center; color: var(--text-light); padding: 20px;">Loading SOS requests...</td>
-            </tr>
+            {% if sos_requests %}
+              {% for sos in sos_requests %}
+              <tr>
+                <td>#{{ sos.id }}</td>
+                <td>
+                  <div>{{ sos.created_at|date:"M d" }}</div>
+                  <div style="font-size: 11px; color: var(--text-medium);">{{ sos.created_at|time:"H:i" }}</div>
+                </td>
+                <td>
+                  <div>{{ sos.user_email }}</div>
+                  {% if sos.user_name %}
+                  <div style="font-size: 11px; color: var(--text-medium);">{{ sos.user_name }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if sos.latitude and sos.longitude %}
+                  <div>{{ sos.latitude|floatformat:4 }}, {{ sos.longitude|floatformat:4 }}</div>
+                  {% else %}
+                  <div style="color: var(--text-medium);">N/A</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge badge-{{ sos.sos_type }}">
+                    {{ sos.get_sos_type_display }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-{{ sos.status }}">
+                    {{ sos.get_status_display }}
+                  </span>
+                </td>
+                <td>{{ sos.assigned_team|default:"—" }}</td>
+                <td>
+                  <a href="#" class="link">View</a>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="8" style="text-align: center; color: var(--text-medium); padding: 20px;">
+                  No SOS requests found.
+                </td>
+              </tr>
+            {% endif %}
           </tbody>
         </table>
         

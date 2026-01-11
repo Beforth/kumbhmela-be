@@ -42,22 +42,145 @@ def _is_staff(user):
 @login_required(login_url="kumbh:admin_login")
 @user_passes_test(_is_staff, login_url="kumbh:admin_login")
 def admin_dashboard_view(request):
-    """Basic admin dashboard page shown after successful login."""
-    return render(request, "admin_dashboard.html")
+    """Admin dashboard with real-time statistics and data."""
+    from datetime import timedelta
+    
+    # Calculate time ranges
+    now = timezone.now()
+    one_hour_ago = now - timedelta(hours=1)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Get real statistics
+    sos_last_hour = SosRequest.objects.filter(
+        created_at__gte=one_hour_ago,
+        is_active=True
+    ).count()
+    
+    lost_found_today = LostFound.objects.filter(
+        created_at__gte=today_start,
+        is_active=True
+    ).count()
+    
+    overcrowded_zones = Zone.objects.filter(
+        status__in=['high', 'critical'],
+        is_active=True
+    ).count()
+    
+    # Get recent SOS requests
+    recent_sos = SosRequest.objects.filter(
+        is_active=True
+    ).order_by('-created_at')[:5]
+    
+    # Get overcrowded zones
+    overcrowded_zones_list = Zone.objects.filter(
+        status__in=['high', 'critical'],
+        is_active=True
+    ).order_by('-capacity')[:10]
+    
+    # Get recent lost/found reports
+    recent_lost_found = LostFound.objects.filter(
+        is_active=True
+    ).order_by('-created_at')[:5]
+    
+    # Get all zones for map
+    all_zones = Zone.objects.filter(is_active=True)
+    
+    # Get all SOS requests for map markers
+    all_sos = SosRequest.objects.filter(is_active=True)
+    
+    # Get all lost/found for map markers
+    all_lost_found = LostFound.objects.filter(is_active=True)
+    
+    # Get amenity counts
+    amenities = Amenity.objects.filter(is_active=True)
+    toilets_count = amenities.filter(category='restroom').count()
+    medical_count = amenities.filter(category='medical').count()
+    help_desk_count = amenities.filter(category='other').count()
+    water_points_count = amenities.filter(category='food').count()
+    
+    context = {
+        'sos_last_hour': sos_last_hour,
+        'lost_found_today': lost_found_today,
+        'overcrowded_zones_count': overcrowded_zones,
+        'recent_sos': recent_sos,
+        'overcrowded_zones_list': overcrowded_zones_list,
+        'recent_lost_found': recent_lost_found,
+        'all_zones': all_zones,
+        'all_sos': all_sos,
+        'all_lost_found': all_lost_found,
+        'toilets_count': toilets_count,
+        'medical_count': medical_count,
+        'help_desk_count': help_desk_count,
+        'water_points_count': water_points_count,
+    }
+    
+    return render(request, "admin_dashboard.html", context)
 
 
 @login_required(login_url="kumbh:admin_login")
 @user_passes_test(_is_staff, login_url="kumbh:admin_login")
 def admin_sos_requests_view(request):
-    """Admin page listing SOS requests."""
-    return render(request, "admin_sos_requests.html")
+    """Admin page listing SOS requests with filtering and search."""
+    sos_requests = SosRequest.objects.filter(is_active=True).order_by('-created_at')
+    
+    # Filter by status
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        sos_requests = sos_requests.filter(status=status_filter)
+    
+    # Search by user email or description
+    search_query = request.GET.get('search', '')
+    if search_query:
+        sos_requests = sos_requests.filter(
+            Q(user_email__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    context = {
+        'sos_requests': sos_requests,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'status_choices': SosRequest.STATUS_CHOICES,
+    }
+    
+    return render(request, "admin_sos_requests.html", context)
 
 
 @login_required(login_url="kumbh:admin_login")
 @user_passes_test(_is_staff, login_url="kumbh:admin_login")
 def admin_lost_found_view(request):
-    """Admin page listing lost/found reports."""
-    return render(request, "admin_lost_found.html")
+    """Admin page listing lost/found reports with filtering."""
+    lost_found = LostFound.objects.filter(is_active=True).order_by('-created_at')
+    
+    # Filter by type
+    type_filter = request.GET.get('type', '')
+    if type_filter:
+        lost_found = lost_found.filter(report_type=type_filter)
+    
+    # Filter by status
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        lost_found = lost_found.filter(status=status_filter)
+    
+    # Search
+    search_query = request.GET.get('search', '')
+    if search_query:
+        lost_found = lost_found.filter(
+            Q(person_name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(location__icontains=search_query)
+        )
+    
+    context = {
+        'lost_found': lost_found,
+        'type_filter': type_filter,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'type_choices': LostFound.REPORT_TYPE_CHOICES,
+        'status_choices': LostFound.STATUS_CHOICES,
+    }
+    
+    return render(request, "admin_lost_found.html", context)
 
 
 @login_required(login_url="kumbh:admin_login")
@@ -67,7 +190,38 @@ def admin_amenities_view(request):
     Admin page showing an overview of on-ground amenities
     (toilets, water points, help desks, etc.).
     """
-    return render(request, "admin_amenities.html")
+    amenities = Amenity.objects.filter(is_active=True).order_by('category', 'name')
+    
+    # Filter by category
+    category_filter = request.GET.get('category', '')
+    if category_filter:
+        amenities = amenities.filter(category=category_filter)
+    
+    # Search
+    search_query = request.GET.get('search', '')
+    if search_query:
+        amenities = amenities.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    # Group by category for display
+    amenities_by_category = {}
+    for amenity in amenities:
+        category = amenity.get_category_display()
+        if category not in amenities_by_category:
+            amenities_by_category[category] = []
+        amenities_by_category[category].append(amenity)
+    
+    context = {
+        'amenities': amenities,
+        'amenities_by_category': amenities_by_category,
+        'category_filter': category_filter,
+        'search_query': search_query,
+        'category_choices': Amenity.CATEGORY_CHOICES,
+    }
+    
+    return render(request, "admin_amenities.html", context)
 
 
 @login_required(login_url="kumbh:admin_login")
@@ -76,7 +230,38 @@ def admin_crowding_zones_view(request):
     """
     Admin page focused on crowding / congestion across zones.
     """
-    return render(request, "admin_crowding_zones.html")
+    zones = Zone.objects.filter(is_active=True).order_by('-capacity', 'name')
+    
+    # Filter by status
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        zones = zones.filter(status=status_filter)
+    
+    # Search
+    search_query = request.GET.get('search', '')
+    if search_query:
+        zones = zones.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    # Group by status
+    zones_by_status = {
+        'critical': zones.filter(status='critical'),
+        'high': zones.filter(status='high'),
+        'moderate': zones.filter(status='moderate'),
+        'safe': zones.filter(status='safe'),
+    }
+    
+    context = {
+        'zones': zones,
+        'zones_by_status': zones_by_status,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'status_choices': Zone.STATUS_CHOICES,
+    }
+    
+    return render(request, "admin_crowding_zones.html", context)
 
 
 @login_required(login_url="kumbh:admin_login")

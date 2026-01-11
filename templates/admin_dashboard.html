@@ -728,21 +728,21 @@
         <div class="kpi-icon kpi-icon-red">!</div>
         <div>
           <div class="kpi-label">SOS Requests (Last Hour)</div>
-          <div class="kpi-value">27</div>
+          <div class="kpi-value">{{ sos_last_hour }}</div>
         </div>
       </div>
       <div class="kpi-card">
         <div class="kpi-icon kpi-icon-green">◎</div>
         <div>
           <div class="kpi-label">Lost / Found Reports (Today)</div>
-          <div class="kpi-value">14</div>
+          <div class="kpi-value">{{ lost_found_today }}</div>
         </div>
       </div>
       <div class="kpi-card">
         <div class="kpi-icon kpi-icon-yellow">⚠</div>
         <div>
           <div class="kpi-label">Overcrowded Zones</div>
-          <div class="kpi-value">5</div>
+          <div class="kpi-value">{{ overcrowded_zones_count }}</div>
         </div>
       </div>
     </section>
@@ -794,22 +794,20 @@
         </div>
 
         <div class="list">
-          <div class="list-row">
-            <span>Har Ki Pauri – Sector A</span>
-            <span class="badge badge-red">Red • Critical</span>
-          </div>
-          <div class="list-row">
-            <span>VIP Ghat – Sector C</span>
-            <span class="badge badge-yellow">Yellow • High</span>
-          </div>
-          <div class="list-row">
-            <span>Bridge Corridor – Gate 3</span>
-            <span class="badge badge-yellow">Yellow • Queue</span>
-          </div>
-          <div class="list-row">
-            <span>Parking P3 – Ingress</span>
-            <span class="badge badge-red">Red • Blocked</span>
-          </div>
+          {% if overcrowded_zones_list %}
+            {% for zone in overcrowded_zones_list %}
+            <div class="list-row">
+              <span>{{ zone.name }}</span>
+              <span class="badge {% if zone.status == 'critical' %}badge-red{% elif zone.status == 'high' %}badge-yellow{% else %}badge-orange{% endif %}">
+                {{ zone.get_status_display }} • {{ zone.capacity }}%
+              </span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="list-row">
+              <span style="color: var(--text-medium);">No overcrowded zones at the moment</span>
+            </div>
+          {% endif %}
         </div>
       </section>
     </main>
@@ -828,33 +826,29 @@
         <div class="stats-row">
           <div class="stat">
             <div class="stat-label">Toilets</div>
-            <div class="stat-value">132</div>
+            <div class="stat-value">{{ toilets_count }}</div>
             <div class="stat-tag tag-green">All operational</div>
           </div>
           <div class="stat">
             <div class="stat-label">Medical Camps</div>
-            <div class="stat-value">18</div>
+            <div class="stat-value">{{ medical_count }}</div>
             <div class="stat-tag tag-green">Ready</div>
           </div>
           <div class="stat">
-            <div class="stat-label">Police / Help Desks</div>
-            <div class="stat-value">26</div>
-            <div class="stat-tag tag-yellow">Peak shift</div>
+            <div class="stat-label">Help Desks</div>
+            <div class="stat-value">{{ help_desk_count }}</div>
+            <div class="stat-tag tag-yellow">Active</div>
           </div>
         </div>
 
         <div class="chip-row">
           <span class="chip">
             <span class="chip-dot"></span>
-            Drinking Water Points • 42
+            Drinking Water Points • {{ water_points_count }}
           </span>
           <span class="chip">
             <span class="chip-dot"></span>
-            Shelters & Rest Areas • 9
-          </span>
-          <span class="chip">
-            <span class="chip-dot"></span>
-            Lost & Found Centers • 5
+            Total Amenities • {{ toilets_count|add:medical_count|add:help_desk_count|add:water_points_count }}
           </span>
         </div>
       </div>
