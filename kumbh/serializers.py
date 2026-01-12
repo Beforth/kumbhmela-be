@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound
+from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound, Event
 
 
 class ZoneSerializer(serializers.ModelSerializer):
@@ -116,4 +116,13 @@ class LostFoundSerializer(serializers.ModelSerializer):
                   'person_name', 'age', 'description', 'location', 'latitude', 'longitude',
                   'photo_url', 'status', 'status_display', 'is_active', 'created_at', 'updated_at')
         read_only_fields = ('id', 'report_type_display', 'status_display', 'created_at', 'updated_at')
+
+
+class EventSerializer(serializers.ModelSerializer):
+    """Serializer for Event model"""
+    
+    class Meta:
+        model = Event
+        fields = ('id', 'title', 'description', 'event_date', 'location', 'is_active', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'created_at', 'updated_at')
 

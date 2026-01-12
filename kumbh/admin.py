@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound
+from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound, Event, SmtpSettings
 
 
 @admin.register(Zone)
@@ -124,3 +124,54 @@ class FamilyInvitationAdmin(admin.ModelAdmin):
             'fields': ('expires_at', 'created_at', 'accepted_at')
         }),
     )
+
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ('title', 'event_date', 'location', 'is_active', 'created_at')
+    list_filter = ('is_active', 'event_date', 'created_at')
+    search_fields = ('title', 'description', 'location')
+    ordering = ('event_date',)
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        ('Event Information', {
+            'fields': ('title', 'description', 'event_date', 'location', 'is_active')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(SmtpSettings)
+class SmtpSettingsAdmin(admin.ModelAdmin):
+    list_display = ('name', 'host', 'port', 'from_email', 'is_default', 'is_active', 'updated_at')
+    list_filter = ('is_default', 'is_active', 'use_tls')
+    search_fields = ('name', 'host', 'username', 'from_email')
+    ordering = ('-is_default', 'name')
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        ('Configuration', {
+            'fields': ('name', 'is_default', 'is_active')
+        }),
+        ('SMTP Server', {
+            'fields': ('host', 'port', 'use_tls')
+        }),
+        ('Authentication', {
+            'fields': ('username', 'password')
+        }),
+        ('Email Settings', {
+            'fields': ('from_email', 'from_name')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        # Make password field use password input widget
+        form.base_fields['password'].widget = admin.widgets.AdminPasswordInputWidget()
+        return form

@@ -229,3 +229,54 @@ class LostFound(models.Model):
         
     def __str__(self):
         return f"{self.get_report_type_display()} - {self.person_name} ({self.user_email})"
+
+
+class Event(models.Model):
+    """Event model for Kumbh Mela events and ceremonies"""
+    title = models.CharField(max_length=255, help_text="Event title")
+    description = models.TextField(help_text="Event description")
+    event_date = models.DateTimeField(help_text="Date and time of the event")
+    location = models.CharField(max_length=255, blank=True, null=True, help_text="Event location")
+    is_active = models.BooleanField(default=True, help_text="Whether the event is active")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'events'
+        ordering = ['event_date']
+        verbose_name = 'Event'
+        verbose_name_plural = 'Events'
+        
+    def __str__(self):
+        return f"{self.title} - {self.event_date.strftime('%Y-%m-%d %H:%M')}"
+
+
+class SmtpSettings(models.Model):
+    """SMTP settings model for email configuration"""
+    name = models.CharField(max_length=255, help_text="Name/identifier for this SMTP configuration")
+    host = models.CharField(max_length=255, help_text="SMTP server host")
+    port = models.IntegerField(default=587, help_text="SMTP server port")
+    use_tls = models.BooleanField(default=True, help_text="Use TLS encryption")
+    username = models.CharField(max_length=255, help_text="SMTP username/email")
+    password = models.CharField(max_length=255, help_text="SMTP password")
+    from_email = models.EmailField(help_text="Default 'from' email address")
+    from_name = models.CharField(max_length=255, blank=True, null=True, help_text="Default 'from' name")
+    is_default = models.BooleanField(default=False, help_text="Use this as the default SMTP configuration")
+    is_active = models.BooleanField(default=True, help_text="Whether this configuration is active")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'smtp_settings'
+        ordering = ['-is_default', 'name']
+        verbose_name = 'SMTP Settings'
+        verbose_name_plural = 'SMTP Settings'
+        
+    def __str__(self):
+        return f"{self.name} ({'Default' if self.is_default else 'Active' if self.is_active else 'Inactive'})"
+    
+    def save(self, *args, **kwargs):
+        # Ensure only one default setting exists
+        if self.is_default:
+            SmtpSettings.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)

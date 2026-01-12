@@ -7,8 +7,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.db.models import Q
-from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound
-from .serializers import ZoneSerializer, AmenitySerializer, AmenityListSerializer, SosRequestSerializer, FamilyMemberSerializer, FamilyInvitationSerializer, LostFoundSerializer
+from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound, Event, SmtpSettings
+from .serializers import ZoneSerializer, AmenitySerializer, AmenityListSerializer, SosRequestSerializer, FamilyMemberSerializer, FamilyInvitationSerializer, LostFoundSerializer, EventSerializer
 from django.utils import timezone
 from datetime import timedelta
 import secrets
@@ -98,6 +98,12 @@ def admin_dashboard_view(request):
     help_desk_count = amenities.filter(category='other').count()
     water_points_count = amenities.filter(category='food').count()
     
+    # Get upcoming events
+    upcoming_events = Event.objects.filter(
+        is_active=True,
+        event_date__gte=now
+    ).order_by('event_date')[:5]
+    
     context = {
         'sos_last_hour': sos_last_hour,
         'lost_found_today': lost_found_today,
@@ -112,6 +118,7 @@ def admin_dashboard_view(request):
         'medical_count': medical_count,
         'help_desk_count': help_desk_count,
         'water_points_count': water_points_count,
+        'upcoming_events': upcoming_events,
     }
     
     return render(request, "admin_dashboard.html", context)
@@ -176,11 +183,40 @@ def admin_lost_found_view(request):
         'type_filter': type_filter,
         'status_filter': status_filter,
         'search_query': search_query,
-        'type_choices': LostFound.REPORT_TYPE_CHOICES,
+        'type_choices': LostFound.TYPE_CHOICES,
         'status_choices': LostFound.STATUS_CHOICES,
     }
     
     return render(request, "admin_lost_found.html", context)
+
+
+@login_required(login_url="kumbh:admin_login")
+@user_passes_test(_is_staff, login_url="kumbh:admin_login")
+def admin_lost_found_detail_view(request, report_id):
+    """Admin page showing detailed view of a lost/found report."""
+    try:
+        report = LostFound.objects.get(id=report_id, is_active=True)
+    except LostFound.DoesNotExist:
+        messages.error(request, "Report not found.")
+        return redirect("kumbh:admin_lost_found")
+    
+    # Handle status update
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status and new_status in [choice[0] for choice in LostFound.STATUS_CHOICES]:
+            report.status = new_status
+            report.save()
+            messages.success(request, f"Report status updated to {report.get_status_display()}.")
+            return redirect("kumbh:admin_lost_found_detail", report_id=report_id)
+        else:
+            messages.error(request, "Invalid status selected.")
+    
+    context = {
+        'report': report,
+        'status_choices': LostFound.STATUS_CHOICES,
+    }
+    
+    return render(request, "admin_lost_found_detail.html", context)
 
 
 @login_required(login_url="kumbh:admin_login")
@@ -262,6 +298,84 @@ def admin_crowding_zones_view(request):
     }
     
     return render(request, "admin_crowding_zones.html", context)
+
+
+@login_required(login_url="kumbh:admin_login")
+@user_passes_test(_is_staff, login_url="kumbh:admin_login")
+def admin_events_view(request):
+    """
+    Admin page for managing Kumbh Mela events.
+    """
+    events = Event.objects.filter(is_active=True).order_by('event_date')
+    
+    # Handle POST request to create/update event
+    if request.method == 'POST':
+        event_id = request.POST.get('event_id')
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        event_date_str = request.POST.get('event_date')
+        location = request.POST.get('location', '')
+        
+        if title and description and event_date_str:
+            try:
+                from django.utils.dateparse import parse_datetime
+                event_date = parse_datetime(event_date_str)
+                if event_date is None:
+                    # Try parsing as date with time
+                    from datetime import datetime
+                    event_date = datetime.strptime(event_date_str, '%Y-%m-%dT%H:%M')
+                
+                if event_id:
+                    # Update existing event
+                    event = Event.objects.get(id=event_id, is_active=True)
+                    event.title = title
+                    event.description = description
+                    event.event_date = event_date
+                    event.location = location
+                    event.save()
+                    messages.success(request, "Event updated successfully.")
+                else:
+                    # Create new event
+                    Event.objects.create(
+                        title=title,
+                        description=description,
+                        event_date=event_date,
+                        location=location,
+                    )
+                    messages.success(request, "Event created successfully.")
+                return redirect("kumbh:admin_events")
+            except Exception as e:
+                messages.error(request, f"Error saving event: {str(e)}")
+        else:
+            messages.error(request, "Please fill in all required fields.")
+    
+    # Handle delete
+    delete_id = request.GET.get('delete')
+    if delete_id:
+        try:
+            event = Event.objects.get(id=delete_id, is_active=True)
+            event.is_active = False
+            event.save()
+            messages.success(request, "Event deleted successfully.")
+            return redirect("kumbh:admin_events")
+        except Event.DoesNotExist:
+            messages.error(request, "Event not found.")
+    
+    # Search
+    search_query = request.GET.get('search', '')
+    if search_query:
+        events = events.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(location__icontains=search_query)
+        )
+    
+    context = {
+        'events': events,
+        'search_query': search_query,
+    }
+    
+    return render(request, "admin_events.html", context)
 
 
 @login_required(login_url="kumbh:admin_login")
@@ -844,6 +958,44 @@ def lost_found_detail(request, pk):
         report.is_active = False
         report.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def events_list(request):
+    """Get list of all active events"""
+    events = Event.objects.filter(is_active=True).order_by('event_date')
+    
+    # Filter by upcoming/past
+    filter_type = request.GET.get('type', '')
+    now = timezone.now()
+    
+    if filter_type == 'upcoming':
+        events = events.filter(event_date__gte=now)
+    elif filter_type == 'past':
+        events = events.filter(event_date__lt=now)
+    
+    serializer = EventSerializer(events, many=True)
+    return Response({
+        'count': events.count(),
+        'results': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def events_detail(request, pk):
+    """Get a specific event"""
+    try:
+        event = Event.objects.get(pk=pk, is_active=True)
+    except Event.DoesNotExist:
+        return Response(
+            {'detail': 'Event not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    serializer = EventSerializer(event)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # Web view for invitation acceptance

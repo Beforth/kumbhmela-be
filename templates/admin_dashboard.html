@@ -641,6 +641,13 @@
             <span class="nav-icon"><i class="ri-road-map-line"></i></span>
             <span>Crowding Zones</span>
           </a>
+          <a
+            href="{% url 'kumbh:admin_events' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'admin_events' %}active{% endif %}"
+          >
+            <span class="nav-icon"><i class="ri-calendar-line"></i></span>
+            <span>Events</span>
+          </a>
         </nav>
       </div>
 
@@ -853,39 +860,33 @@
         </div>
       </div>
 
-      <!-- Next Shahi Snan card -->
+      <!-- Upcoming Events card -->
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">Next Shahi Snan</div>
-            <div class="card-sub">Upcoming royal bath – readiness snapshot</div>
+            <div class="card-title">Upcoming Events</div>
+            <div class="card-sub">Next scheduled Kumbh Mela events</div>
           </div>
+          <a href="{% url 'kumbh:admin_events' %}" style="color: var(--primary-orange); text-decoration: none; font-size: 13px; font-weight: 600;">Manage</a>
         </div>
 
-        <div class="stat" style="margin-top: 4px;">
-          <div class="stat-label">Date & Time</div>
-          <div class="stat-value">14 Jan • 4:30 AM – 11:30 AM</div>
-          <div class="stat-tag tag-yellow">High expected turnout</div>
-        </div>
-
-        <div class="checklist">
-          <div class="checklist-item">
-            <span class="check-icon">✓</span>
-            <span>Traffic diversion plan approved</span>
+        {% if upcoming_events %}
+          {% for event in upcoming_events %}
+          <div class="stat" style="margin-top: {% if forloop.first %}4px{% else %}16px{% endif %};">
+            <div class="stat-label">{{ event.title }}</div>
+            <div class="stat-value">{{ event.event_date|date:"M d, Y" }} • {{ event.event_date|time:"g:i A" }}</div>
+            {% if event.location %}
+            <div class="stat-tag tag-green">{{ event.location }}</div>
+            {% endif %}
           </div>
-          <div class="checklist-item">
-            <span class="check-icon">✓</span>
-            <span>Extra medical teams scheduled</span>
+          {% if not forloop.last %}<div style="height: 1px; background: var(--border-soft); margin: 12px 0;"></div>{% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="stat" style="margin-top: 4px;">
+            <div class="stat-label">No upcoming events</div>
+            <div class="stat-value" style="font-size: 13px; color: var(--text-medium);">Add events to see them here</div>
           </div>
-          <div class="checklist-item">
-            <span class="check-icon">✓</span>
-            <span>Additional loudspeakers & signages placed</span>
-          </div>
-          <div class="checklist-item">
-            <span class="check-icon">✓</span>
-            <span>Lost & found control room staffed</span>
-          </div>
-        </div>
+        {% endif %}
       </div>
     </section>
     </div>

@@ -14,6 +14,8 @@ from .views import (
     accept_family_invitation,
     lost_found_list,
     lost_found_detail,
+    events_list,
+    events_detail,
 )
 
 app_name = 'kumbh_api'
@@ -44,5 +46,9 @@ urlpatterns = [
     # Lost & Found APIs
     path('lost-found/', lost_found_list, name='lost-found-list'),
     path('lost-found/<int:pk>/', lost_found_detail, name='lost-found-detail'),
+    
+    # Events APIs
+    path('events/', events_list, name='events-list'),
+    path('events/<int:pk>/', events_detail, name='events-detail'),
 ]
 

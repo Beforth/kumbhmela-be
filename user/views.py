@@ -65,7 +65,6 @@ def login(request):
         print(f"Login request method: {request.method}")
         print(f"Login request content type: {request.content_type}")
         print(f"Login request data: {request.data}")
-        print(f"Login request body (raw): {request.body[:200] if hasattr(request, 'body') else 'N/A'}")
         
         # Check if request.data is empty
         if not request.data:
@@ -107,3 +106,133 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     
     def get_object(self):
         return self.request.user
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def forgot_password(request):
+    """Forgot password endpoint - sends password reset email"""
+    try:
+        email = request.data.get('email')
+        
+        if not email:
+            return Response(
+                {'error': 'Email is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if user exists
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Don't reveal if user exists or not for security
+            return Response(
+                {'message': 'If an account exists with this email, a password reset link has been sent.'},
+                status=status.HTTP_200_OK
+            )
+        
+        # Generate a temporary password or reset token
+        import secrets
+        import string
+        temp_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
+        
+        # Set the temporary password
+        user.set_password(temp_password)
+        user.save()
+        
+        # Get SMTP settings
+        from kumbh.models import SmtpSettings
+        smtp_settings = SmtpSettings.objects.filter(is_default=True, is_active=True).first()
+        
+        if not smtp_settings:
+            return Response(
+                {'error': 'Email service is not configured. Please contact administrator.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Send email using SMTP settings
+        try:
+            _send_password_reset_email(user, temp_password, smtp_settings)
+            return Response(
+                {'message': 'Password reset email has been sent. Please check your inbox.'},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            print(f"Error sending email: {str(e)}")
+            return Response(
+                {'error': f'Failed to send email: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    except Exception as e:
+        print(f"Forgot password exception: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response(
+            {'error': f'Server error: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+def _send_password_reset_email(user, temp_password, smtp_settings):
+    """Send password reset email using SMTP settings"""
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    from email.utils import formataddr
+    
+    # Create message
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = 'Kumbh Suraksha - Password Reset'
+    msg['From'] = formataddr((smtp_settings.from_name or 'Kumbh Suraksha', smtp_settings.from_email))
+    msg['To'] = user.email
+    
+    # Create email body
+    html_body = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #f97316;">Kumbh Suraksha</h2>
+          <h3>Password Reset Request</h3>
+          <p>Hello {user.full_name or user.email},</p>
+          <p>You have requested to reset your password. Your temporary password is:</p>
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
+            <strong style="font-size: 18px; color: #f97316;">{temp_password}</strong>
+          </div>
+          <p>Please login with this temporary password and change it immediately for security.</p>
+          <p style="color: #666; font-size: 12px; margin-top: 30px;">
+            If you did not request this password reset, please ignore this email or contact support.
+          </p>
+        </div>
+      </body>
+    </html>
+    """
+    
+    text_body = f"""
+    Kumbh Suraksha - Password Reset
+    
+    Hello {user.full_name or user.email},
+    
+    You have requested to reset your password. Your temporary password is:
+    
+    {temp_password}
+    
+    Please login with this temporary password and change it immediately for security.
+    
+    If you did not request this password reset, please ignore this email or contact support.
+    """
+    
+    # Attach parts
+    msg.attach(MIMEText(text_body, 'plain'))
+    msg.attach(MIMEText(html_body, 'html'))
+    
+    # Send email
+    if smtp_settings.use_tls:
+        server = smtplib.SMTP(smtp_settings.host, smtp_settings.port)
+        server.starttls()
+    else:
+        server = smtplib.SMTP_SSL(smtp_settings.host, smtp_settings.port)
+    
+    server.login(smtp_settings.username, smtp_settings.password)
+    server.send_message(msg)
+    server.quit()
