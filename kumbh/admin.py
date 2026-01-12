@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound, Event, SmtpSettings
 
 
@@ -173,5 +174,5 @@ class SmtpSettingsAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         # Make password field use password input widget
-        form.base_fields['password'].widget = admin.widgets.AdminPasswordInputWidget()
+        form.base_fields['password'].widget = forms.PasswordInput(attrs={'class': 'vTextField'})
         return form
