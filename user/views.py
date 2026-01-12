@@ -180,6 +180,7 @@ def _send_password_reset_email(user, temp_password, smtp_settings):
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
     from email.utils import formataddr
+    import socket
     
     # Create message
     msg = MIMEMultipart('alternative')
@@ -226,13 +227,49 @@ def _send_password_reset_email(user, temp_password, smtp_settings):
     msg.attach(MIMEText(text_body, 'plain'))
     msg.attach(MIMEText(html_body, 'html'))
     
-    # Send email
-    if smtp_settings.use_tls:
-        server = smtplib.SMTP(smtp_settings.host, smtp_settings.port)
-        server.starttls()
-    else:
-        server = smtplib.SMTP_SSL(smtp_settings.host, smtp_settings.port)
-    
-    server.login(smtp_settings.username, smtp_settings.password)
-    server.send_message(msg)
-    server.quit()
+    # Send email with proper error handling and timeout
+    server = None
+    try:
+        # Set socket timeout
+        socket.setdefaulttimeout(30)  # 30 seconds timeout
+        
+        # Connect to SMTP server
+        if smtp_settings.use_tls:
+            server = smtplib.SMTP(smtp_settings.host, smtp_settings.port, timeout=30)
+            server.set_debuglevel(0)  # Set to 1 for debugging
+            server.starttls()
+        else:
+            server = smtplib.SMTP_SSL(smtp_settings.host, smtp_settings.port, timeout=30)
+            server.set_debuglevel(0)
+        
+        # Login
+        server.login(smtp_settings.username, smtp_settings.password)
+        
+        # Send email
+        server.send_message(msg)
+        
+        print(f"Password reset email sent successfully to {user.email}")
+        
+    except socket.gaierror as e:
+        raise Exception(f"DNS resolution failed for SMTP host '{smtp_settings.host}': {str(e)}. Please check the SMTP host address.")
+    except socket.timeout:
+        raise Exception(f"Connection timeout while connecting to SMTP server '{smtp_settings.host}:{smtp_settings.port}'. Please check your network connection and SMTP settings.")
+    except ConnectionRefusedError:
+        raise Exception(f"Connection refused by SMTP server '{smtp_settings.host}:{smtp_settings.port}'. Please check the SMTP host and port settings.")
+    except OSError as e:
+        if "Network is unreachable" in str(e) or "errno 101" in str(e):
+            raise Exception(f"Network is unreachable. Cannot connect to SMTP server '{smtp_settings.host}:{smtp_settings.port}'. Please check your network connection and firewall settings.")
+        else:
+            raise Exception(f"Network error: {str(e)}")
+    except smtplib.SMTPAuthenticationError as e:
+        raise Exception(f"SMTP authentication failed. Please check your username and password in SMTP settings.")
+    except smtplib.SMTPException as e:
+        raise Exception(f"SMTP error: {str(e)}")
+    except Exception as e:
+        raise Exception(f"Failed to send email: {str(e)}")
+    finally:
+        if server:
+            try:
+                server.quit()
+            except:
+                pass
