@@ -109,6 +109,53 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
 
 @api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def change_password(request):
+    """Change password endpoint - requires authentication"""
+    try:
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+        
+        if not old_password or not new_password:
+            return Response(
+                {'error': 'Both old_password and new_password are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if len(new_password) < 6:
+            return Response(
+                {'error': 'New password must be at least 6 characters long'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Verify old password
+        user = request.user
+        if not user.check_password(old_password):
+            return Response(
+                {'error': 'Current password is incorrect'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Set new password
+        user.set_password(new_password)
+        user.save()
+        
+        return Response(
+            {'message': 'Password changed successfully'},
+            status=status.HTTP_200_OK
+        )
+        
+    except Exception as e:
+        print(f"Change password exception: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response(
+            {'error': f'Server error: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def forgot_password(request):
     """Forgot password endpoint - sends password reset email"""
