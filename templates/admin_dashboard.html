@@ -639,7 +639,7 @@
             class="nav-item {% if request.resolver_match.url_name == 'admin_crowding_zones' %}active{% endif %}"
           >
             <span class="nav-icon"><i class="ri-road-map-line"></i></span>
-            <span>Crowding Zones</span>
+            <span>Zones</span>
           </a>
           <a
             href="{% url 'kumbh:admin_events' %}"
@@ -765,19 +765,59 @@
         </div>
 
         <div class="map-wrapper" style="margin-top: 8px;">
-          <div class="map-legend">
-            <span style="display: flex; align-items: center; gap: 4px;">
-              <span class="legend-dot" style="background: var(--emerald);"></span><span>Safe</span>
-            </span>
-            <span style="display: flex; align-items: center; gap: 4px;">
-              <span class="legend-dot" style="background: var(--yellow);"></span><span>Moderate</span>
-            </span>
-            <span style="display: flex; align-items: center; gap: 4px;">
-              <span class="legend-dot" style="background: var(--primary-orange);"></span><span>High</span>
-            </span>
-            <span style="display: flex; align-items: center; gap: 4px;">
-              <span class="legend-dot" style="background: var(--rose);"></span><span>Critical</span>
-            </span>
+          <div class="map-legend" style="display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; max-width: 240px; font-size: 10px; max-height: 320px; overflow-y: auto;">
+            <div style="font-size: 11px; font-weight: 600; margin-bottom: 4px; color: #e5e7eb;">Map Legend</div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 10px; font-weight: 600; color: #94a3b8; margin-top: 4px; margin-bottom: 2px;">ZONES</div>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="legend-dot" style="background: #10B981; width: 12px; height: 12px;"></span><span>Safe (Green)</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="legend-dot" style="background: #EAB308; width: 12px; height: 12px;"></span><span>Moderate (Yellow)</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="legend-dot" style="background: #F97316; width: 12px; height: 12px;"></span><span>High (Orange)</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="legend-dot" style="background: #F43F5E; width: 12px; height: 12px;"></span><span>Critical (Red)</span>
+              </span>
+              
+              <div style="font-size: 10px; font-weight: 600; color: #94a3b8; margin-top: 8px; margin-bottom: 2px;">AMENITIES</div>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="background: #F43F5E; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white;"></span><span>Medical</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="background: #3B82F6; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white;"></span><span>Restrooms</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="background: #10B981; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white;"></span><span>Food/Water</span>
+              </span>
+              
+              <div style="font-size: 10px; font-weight: 600; color: #94a3b8; margin-top: 8px; margin-bottom: 2px;">GEOGRAPHIC FEATURES</div>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="legend-dot" style="background: #3B82F6; width: 12px; height: 12px;"></span><span>Roads</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="legend-dot" style="background: #10B981; width: 12px; height: 12px;"></span><span>Parking</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="legend-dot" style="background: #F59E0B; width: 12px; height: 12px;"></span><span>Holding Areas</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span class="legend-dot" style="background: #8B5CF6; width: 12px; height: 12px;"></span><span>Staging Areas</span>
+              </span>
+              
+              <div style="font-size: 10px; font-weight: 600; color: #94a3b8; margin-top: 8px; margin-bottom: 2px;">REPORTS</div>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="background: #F43F5E; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span><span>SOS Requests</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="background: #F59E0B; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span><span>Lost Reports</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="background: #10B981; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></span><span>Found Reports</span>
+              </span>
+            </div>
           </div>
           <div
             id="crowd-map"
@@ -795,24 +835,48 @@
       <section class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">Overcrowded Zones</div>
-            <div class="card-sub">Live list of sectors in yellow / red status</div>
+            <div class="card-title">Geographic Features</div>
+            <div class="card-sub">Roads, areas, parking, and zones from KMZ files</div>
           </div>
         </div>
 
         <div class="list">
-          {% if overcrowded_zones_list %}
-            {% for zone in overcrowded_zones_list %}
-            <div class="list-row">
-              <span>{{ zone.name }}</span>
-              <span class="badge {% if zone.status == 'critical' %}badge-red{% elif zone.status == 'high' %}badge-yellow{% else %}badge-orange{% endif %}">
-                {{ zone.get_status_display }} • {{ zone.capacity }}%
-              </span>
+          {% if roads %}
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 11px; color: var(--text-light); margin-bottom: 6px; font-weight: 600;">ROADS ({{ roads.count }})</div>
+              {% for road in roads|slice:":5" %}
+              <div class="list-row">
+                <span>{{ road.name }}</span>
+                <span class="badge badge-green">{{ road.get_geometry_type_display }}</span>
+              </div>
+              {% endfor %}
             </div>
-            {% endfor %}
-          {% else %}
+          {% endif %}
+          {% if areas %}
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 11px; color: var(--text-light); margin-bottom: 6px; font-weight: 600;">AREAS & ZONES ({{ areas.count }})</div>
+              {% for area in areas|slice:":5" %}
+              <div class="list-row">
+                <span>{{ area.name }}</span>
+                <span class="badge badge-yellow">{{ area.get_feature_type_display }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if parking %}
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 11px; color: var(--text-light); margin-bottom: 6px; font-weight: 600;">PARKING ({{ parking.count }})</div>
+              {% for park in parking|slice:":3" %}
+              <div class="list-row">
+                <span>{{ park.name }}</span>
+                <span class="badge badge-green">Parking</span>
+              </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if not roads and not areas and not parking %}
             <div class="list-row">
-              <span style="color: var(--text-medium);">No overcrowded zones at the moment</span>
+              <span style="color: var(--text-medium);">No geographic features imported yet. Use: python manage.py import_kmz</span>
             </div>
           {% endif %}
         </div>
@@ -828,6 +892,7 @@
             <div class="card-title">Amenities Available</div>
             <div class="card-sub">On-ground facilities for crowd comfort & safety</div>
           </div>
+          <a href="{% url 'kumbh:admin_amenities' %}" style="color: var(--primary-orange); text-decoration: none; font-size: 13px; font-weight: 600;">View All</a>
         </div>
 
         <div class="stats-row">
@@ -899,7 +964,7 @@
     crossorigin=""
   ></script>
   <script>
-    // Mirror mobile app map: OpenStreetMap tiles + crowd zones
+    // Initialize map with default view (will be adjusted to fit all features)
     const map = L.map("crowd-map").setView([29.9457, 78.1642], 14);
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -907,6 +972,7 @@
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
+    // Helper function to get zone color
     function getZoneColor(color) {
       switch (color) {
         case "red":
@@ -922,28 +988,363 @@
       }
     }
 
-    // Same CROWD_ZONES as in the mobile app (lib/constants.dart)
-    const CROWD_ZONES = [
-      { id: 1, name: "Har Ki Pauri", status: "Moderate", color: "orange", capacity: 45, lat: 29.9576, lng: 78.1712 },
-      { id: 2, name: "Triveni Ghat", status: "Safe", color: "green", capacity: 25, lat: 29.935, lng: 78.155 },
-      { id: 3, name: "Ram Jhula", status: "High", color: "red", capacity: 75, lat: 29.965, lng: 78.185 },
-      { id: 4, name: "Main Bazaar", status: "Critical", color: "red", capacity: 95, lat: 29.95, lng: 78.16 },
-      { id: 5, name: "Lakshman Jhula", status: "Moderate", color: "yellow", capacity: 50, lat: 29.98, lng: 78.19 },
-      { id: 6, name: "Bharat Mandir", status: "Safe", color: "green", capacity: 30, lat: 29.94, lng: 78.14 },
+    // Store all layers for bounds calculation
+    const allLayers = [];
+
+    // Zones from database
+    const ZONES = [
+      {% for zone in all_zones %}
+      {
+        id: {{ zone.id }},
+        name: "{{ zone.name|escapejs }}",
+        status: "{{ zone.status }}",
+        color: "{{ zone.color }}",
+        capacity: {{ zone.capacity }},
+        zone_type: "{{ zone.zone_type }}",
+        lat: {{ zone.latitude|default:"null" }},
+        lng: {{ zone.longitude|default:"null" }},
+        polygon: {% if zone.polygon %}{{ zone.polygon|safe }}{% else %}null{% endif %},
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
     ];
 
-    CROWD_ZONES.forEach((zone) => {
-      const color = getZoneColor(zone.color);
-      L.circle([zone.lat, zone.lng], {
-        color,
-        fillColor: color,
-        fillOpacity: 0.35,
-        radius: 150 + zone.capacity * 5, // similar scale as mobile app
-        weight: 1,
-      })
-        .addTo(map)
-        .bindPopup(`<strong>${zone.name}</strong><br>Status: ${zone.status}`);
+    // Amenities from database
+    const AMENITIES = [
+      {% for amenity in all_amenities %}
+      {
+        id: {{ amenity.id }},
+        name: "{{ amenity.name|escapejs }}",
+        category: "{{ amenity.category }}",
+        lat: {{ amenity.latitude }},
+        lng: {{ amenity.longitude }},
+        description: "{{ amenity.description|escapejs|default:'' }}",
+        phone: "{{ amenity.phone|default:'' }}",
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    // Geographic features from database (excluding zones and amenities)
+    const GEOGRAPHIC_FEATURES = [
+      {% for feature in geographic_features %}
+      {
+        id: {{ feature.id }},
+        name: "{{ feature.name|escapejs }}",
+        type: "{{ feature.feature_type }}",
+        geometry_type: "{{ feature.geometry_type }}",
+        lat: {{ feature.latitude|default:"null" }},
+        lng: {{ feature.longitude|default:"null" }},
+        coordinates: {% if feature.coordinates %}{{ feature.coordinates|safe }}{% else %}null{% endif %},
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    // SOS requests from database
+    const SOS_REQUESTS = [
+      {% for sos in all_sos %}
+      {
+        id: {{ sos.id }},
+        type: "{{ sos.sos_type }}",
+        user_email: "{{ sos.user_email|escapejs }}",
+        description: "{{ sos.description|escapejs|default:'' }}",
+        lat: {{ sos.latitude }},
+        lng: {{ sos.longitude }},
+        status: "{{ sos.status }}",
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    // Lost/Found reports from database
+    const LOST_FOUND_REPORTS = [
+      {% for report in all_lost_found %}
+      {
+        id: {{ report.id }},
+        type: "{{ report.report_type }}",
+        person_name: "{{ report.person_name|escapejs }}",
+        location: "{{ report.location|escapejs }}",
+        lat: {{ report.latitude|default:"null" }},
+        lng: {{ report.longitude|default:"null" }},
+        status: "{{ report.status }}",
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    // Helper function to get feature color
+    function getFeatureColor(type) {
+      const colors = {
+        'road': '#3B82F6',
+        'parking': '#10B981',
+        'holding_area': '#F59E0B',
+        'staging_area': '#8B5CF6',
+        'release_point': '#EF4444',
+        'route': '#6366F1',
+        'zone': '#F97316',
+        'area': '#10B981',
+        'other': '#64748B'
+      };
+      return colors[type] || '#64748B';
+    }
+
+    // Render zones on map
+    ZONES.forEach((zone) => {
+      let layer = null;
+      
+      if (zone.zone_type === 'circle' && zone.lat && zone.lng) {
+        // Circle zone
+        const zoneColor = getZoneColor(zone.color);
+        layer = L.circle([zone.lat, zone.lng], {
+          color: zoneColor,
+          fillColor: zoneColor,
+          fillOpacity: 0.3,
+          radius: 150 + zone.capacity * 5,
+          weight: 2,
+        })
+          .bindPopup(`<div style="min-width: 200px;">
+            <strong style="color: ${zoneColor};">${zone.name}</strong><br>
+            <small>Status: ${zone.status}</small><br>
+            <small>Capacity: ${zone.capacity}%</small>
+          </div>`);
+      } else if (zone.zone_type === 'polygon' && zone.polygon && Array.isArray(zone.polygon) && zone.polygon.length > 0) {
+        // Polygon zone
+        try {
+          const latlngs = zone.polygon.map(coord => {
+            if (Array.isArray(coord) && coord.length >= 2) {
+              return [parseFloat(coord[0]), parseFloat(coord[1])];
+            }
+            return null;
+          }).filter(coord => coord !== null);
+          
+          if (latlngs.length >= 3) {
+            const zoneColor = getZoneColor(zone.color);
+            layer = L.polygon(latlngs, {
+              color: zoneColor,
+              fillColor: zoneColor,
+              fillOpacity: 0.3,
+              weight: 2,
+              opacity: 0.8,
+            })
+              .bindPopup(`<div style="min-width: 200px;">
+                <strong style="color: ${zoneColor};">${zone.name}</strong><br>
+                <small>Status: ${zone.status}</small><br>
+                <small>Capacity: ${zone.capacity}%</small>
+              </div>`);
+          }
+        } catch (e) {
+          console.error('Error rendering zone polygon:', zone.name, e);
+        }
+      }
+      
+      if (layer) {
+        layer.addTo(map);
+        allLayers.push(layer);
+      }
     });
+
+    // Render amenities on map
+    AMENITIES.forEach((amenity) => {
+      if (amenity.lat && amenity.lng) {
+        const amenityColors = {
+          'medical': '#F43F5E',
+          'restroom': '#3B82F6',
+          'food': '#10B981',
+          'parking': '#F59E0B',
+          'accommodation': '#8B5CF6',
+          'transport': '#6366F1',
+          'worship': '#F97316',
+          'shopping': '#EC4899',
+          'other': '#64748B'
+        };
+        
+        const iconColor = amenityColors[amenity.category] || '#64748B';
+        const icon = L.divIcon({
+          className: 'amenity-marker',
+          html: `<div style="
+            background: ${iconColor};
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+          "></div>`,
+          iconSize: [18, 18],
+          iconAnchor: [9, 9]
+        });
+        
+        const marker = L.marker([amenity.lat, amenity.lng], { icon: icon })
+          .bindPopup(`<div style="min-width: 200px;">
+            <strong style="color: ${iconColor};">${amenity.name}</strong><br>
+            <small>Category: ${amenity.category}</small><br>
+            ${amenity.description ? `<small>${amenity.description}</small><br>` : ''}
+            ${amenity.phone ? `<small>Phone: ${amenity.phone}</small>` : ''}
+          </div>`)
+          .addTo(map);
+        allLayers.push(marker);
+      }
+    });
+
+    // Render geographic features on map
+    GEOGRAPHIC_FEATURES.forEach((feature) => {
+      let layer = null;
+      
+      if (feature.geometry_type === 'point' && feature.lat && feature.lng) {
+        // Point marker
+        const markerColor = getFeatureColor(feature.type);
+        layer = L.circleMarker([feature.lat, feature.lng], {
+          color: markerColor,
+          fillColor: markerColor,
+          fillOpacity: 0.8,
+          radius: 10,
+          weight: 3,
+        })
+          .bindPopup(`<div style="min-width: 200px;">
+            <strong style="color: ${markerColor};">${feature.name}</strong><br>
+            <small>Type: ${feature.type.replace('_', ' ')}</small><br>
+            <small>Geometry: ${feature.geometry_type}</small>
+          </div>`);
+      } else if (feature.geometry_type === 'line' && feature.coordinates && Array.isArray(feature.coordinates) && feature.coordinates.length > 0) {
+        // LineString
+        try {
+          const latlngs = feature.coordinates.map(coord => {
+            if (Array.isArray(coord) && coord.length >= 2) {
+              return [parseFloat(coord[0]), parseFloat(coord[1])];
+            }
+            return null;
+          }).filter(coord => coord !== null);
+          
+          if (latlngs.length > 0) {
+            const lineColor = getFeatureColor(feature.type);
+            layer = L.polyline(latlngs, {
+              color: lineColor,
+              weight: 5,
+              opacity: 0.9,
+            })
+              .bindPopup(`<div style="min-width: 200px;">
+                <strong style="color: ${lineColor};">${feature.name}</strong><br>
+                <small>Type: ${feature.type.replace('_', ' ')}</small><br>
+                <small>Road/Route</small>
+              </div>`);
+          }
+        } catch (e) {
+          console.error('Error rendering line:', feature.name, e);
+        }
+      } else if (feature.geometry_type === 'polygon' && feature.coordinates && Array.isArray(feature.coordinates) && feature.coordinates.length > 0) {
+        // Polygon
+        try {
+          const latlngs = feature.coordinates.map(coord => {
+            if (Array.isArray(coord) && coord.length >= 2) {
+              return [parseFloat(coord[0]), parseFloat(coord[1])];
+            }
+            return null;
+          }).filter(coord => coord !== null);
+          
+          if (latlngs.length >= 3) {
+            const fillColor = getFeatureColor(feature.type);
+            layer = L.polygon(latlngs, {
+              color: fillColor,
+              fillColor: fillColor,
+              fillOpacity: 0.4,
+              weight: 3,
+              opacity: 0.8,
+            })
+              .bindPopup(`<div style="min-width: 200px;">
+                <strong style="color: ${fillColor};">${feature.name}</strong><br>
+                <small>Type: ${feature.type.replace('_', ' ')}</small><br>
+                <small>Area/Zone</small>
+              </div>`);
+          }
+        } catch (e) {
+          console.error('Error rendering polygon:', feature.name, e);
+        }
+      }
+      
+      if (layer) {
+        layer.addTo(map);
+        allLayers.push(layer);
+      }
+    });
+
+    // Render SOS requests
+    SOS_REQUESTS.forEach((sos) => {
+      if (sos.lat && sos.lng) {
+        const icon = L.divIcon({
+          className: 'sos-marker',
+          html: `<div style="
+            background: #F43F5E;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+          ">!</div>`,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+        
+        const marker = L.marker([sos.lat, sos.lng], { icon: icon })
+          .bindPopup(`<div style="min-width: 200px;">
+            <strong style="color: #F43F5E;">🚨 SOS Request</strong><br>
+            <strong>Type:</strong> ${sos.type}<br>
+            <strong>User:</strong> ${sos.user_email}<br>
+            <strong>Status:</strong> ${sos.status}<br>
+            ${sos.description ? `<strong>Details:</strong> ${sos.description}` : ''}
+          </div>`)
+          .addTo(map);
+        allLayers.push(marker);
+      }
+    });
+
+    // Render Lost/Found reports
+    LOST_FOUND_REPORTS.forEach((report) => {
+      if (report.lat && report.lng) {
+        const iconColor = report.type === 'lost' ? '#F59E0B' : '#10B981';
+        const icon = L.divIcon({
+          className: 'lost-found-marker',
+          html: `<div style="
+            background: ${iconColor};
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+          ">${report.type === 'lost' ? '?' : '✓'}</div>`,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
+        });
+        
+        const marker = L.marker([report.lat, report.lng], { icon: icon })
+          .bindPopup(`<div style="min-width: 200px;">
+            <strong style="color: ${iconColor};">${report.type === 'lost' ? '🔍 Lost' : '✅ Found'}</strong><br>
+            <strong>Person/Item:</strong> ${report.person_name}<br>
+            <strong>Location:</strong> ${report.location}<br>
+            <strong>Status:</strong> ${report.status}
+          </div>`)
+          .addTo(map);
+        allLayers.push(marker);
+      }
+    });
+
+    // Fit map to show all features
+    if (allLayers.length > 0) {
+      try {
+        const group = new L.featureGroup(allLayers);
+        map.fitBounds(group.getBounds().pad(0.1), { maxZoom: 16 });
+      } catch (e) {
+        console.error('Error fitting bounds:', e);
+        // Fallback to default view if bounds calculation fails
+        map.setView([29.9457, 78.1642], 14);
+      }
+    }
 
     // Update current time in sidebar
     function updateTime() {

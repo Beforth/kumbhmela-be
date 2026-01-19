@@ -21,7 +21,6 @@ def register(request):
         print(f"Register request method: {request.method}")
         print(f"Register request content type: {request.content_type}")
         print(f"Register request data: {request.data}")
-        print(f"Register request body (raw): {request.body[:200] if hasattr(request, 'body') else 'N/A'}")
         
         # Check if request.data is empty
         if not request.data:

@@ -280,3 +280,47 @@ class SmtpSettings(models.Model):
         if self.is_default:
             SmtpSettings.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
         super().save(*args, **kwargs)
+
+
+class GeographicFeature(models.Model):
+    """Geographic feature model for storing data from KMZ/KML files"""
+    FEATURE_TYPE_CHOICES = [
+        ('road', 'Road'),
+        ('area', 'Area'),
+        ('zone', 'Zone'),
+        ('parking', 'Parking'),
+        ('holding_area', 'Holding Area'),
+        ('staging_area', 'Staging Area'),
+        ('release_point', 'Release Point'),
+        ('route', 'Route'),
+        ('other', 'Other'),
+    ]
+    
+    GEOMETRY_TYPE_CHOICES = [
+        ('point', 'Point'),
+        ('line', 'Line'),
+        ('polygon', 'Polygon'),
+    ]
+    
+    name = models.CharField(max_length=255, help_text="Name of the geographic feature")
+    feature_type = models.CharField(max_length=50, choices=FEATURE_TYPE_CHOICES, default='other', help_text="Type of feature")
+    geometry_type = models.CharField(max_length=20, choices=GEOMETRY_TYPE_CHOICES, help_text="Type of geometry")
+    kmz_file_name = models.CharField(max_length=255, help_text="Source KMZ file name")
+    # For point geometry
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, help_text="Point latitude")
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True, help_text="Point longitude")
+    # For line/polygon geometry - stored as JSON array of [lat, lng] pairs
+    coordinates = models.JSONField(blank=True, null=True, help_text="Line or polygon coordinates as array of [lat, lng] pairs")
+    description = models.TextField(blank=True, null=True, help_text="Additional description")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'geographic_features'
+        ordering = ['feature_type', 'name']
+        verbose_name = 'Geographic Feature'
+        verbose_name_plural = 'Geographic Features'
+        
+    def __str__(self):
+        return f"{self.name} ({self.get_feature_type_display()})"

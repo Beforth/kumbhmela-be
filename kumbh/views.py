@@ -7,7 +7,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.db.models import Q
-from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound, Event, SmtpSettings
+from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound, Event, SmtpSettings, GeographicFeature
 from .serializers import ZoneSerializer, AmenitySerializer, AmenityListSerializer, SosRequestSerializer, FamilyMemberSerializer, FamilyInvitationSerializer, LostFoundSerializer, EventSerializer
 from django.utils import timezone
 from datetime import timedelta
@@ -61,29 +61,18 @@ def admin_dashboard_view(request):
         is_active=True
     ).count()
     
-    overcrowded_zones = Zone.objects.filter(
-        status__in=['high', 'critical'],
-        is_active=True
-    ).count()
+    # Removed zones - using geographic features instead
+    overcrowded_zones = 0
     
     # Get recent SOS requests
     recent_sos = SosRequest.objects.filter(
         is_active=True
     ).order_by('-created_at')[:5]
     
-    # Get overcrowded zones
-    overcrowded_zones_list = Zone.objects.filter(
-        status__in=['high', 'critical'],
-        is_active=True
-    ).order_by('-capacity')[:10]
-    
     # Get recent lost/found reports
     recent_lost_found = LostFound.objects.filter(
         is_active=True
     ).order_by('-created_at')[:5]
-    
-    # Get all zones for map
-    all_zones = Zone.objects.filter(is_active=True)
     
     # Get all SOS requests for map markers
     all_sos = SosRequest.objects.filter(is_active=True)
@@ -91,12 +80,42 @@ def admin_dashboard_view(request):
     # Get all lost/found for map markers
     all_lost_found = LostFound.objects.filter(is_active=True)
     
-    # Get amenity counts
-    amenities = Amenity.objects.filter(is_active=True)
-    toilets_count = amenities.filter(category='restroom').count()
-    medical_count = amenities.filter(category='medical').count()
-    help_desk_count = amenities.filter(category='other').count()
-    water_points_count = amenities.filter(category='food').count()
+    # Get zones (separate from geographic features)
+    all_zones = Zone.objects.filter(is_active=True)
+    overcrowded_zones_list = Zone.objects.filter(
+        status__in=['high', 'critical'],
+        is_active=True
+    ).order_by('-capacity')[:10]
+    overcrowded_zones_count = overcrowded_zones_list.count()
+    
+    # Get amenities (separate from geographic features)
+    all_amenities = Amenity.objects.filter(is_active=True)
+    toilets_count = all_amenities.filter(category='restroom').count()
+    medical_count = all_amenities.filter(category='medical').count()
+    help_desk_count = all_amenities.filter(category='other').count()
+    water_points_count = all_amenities.filter(category='food').count()
+    
+    # Get geographic features from KMZ files (excluding zones and amenities)
+    # Note: Zones should be managed via Zone model, not GeographicFeature
+    # GeographicFeature objects with feature_type='zone' are separate and should not be shown as zones
+    geographic_features = GeographicFeature.objects.filter(
+        is_active=True
+    ).exclude(feature_type='zone').exclude(
+        # Exclude any features that might be amenities
+        name__icontains='toilet'
+    ).exclude(
+        name__icontains='restroom'
+    ).exclude(
+        name__icontains='medical'
+    )
+    
+    # Group geographic features by type
+    roads = geographic_features.filter(feature_type='road')
+    parking = geographic_features.filter(feature_type='parking')
+    holding_areas = geographic_features.filter(feature_type='holding_area')
+    staging_areas = geographic_features.filter(feature_type='staging_area')
+    release_points = geographic_features.filter(feature_type='release_point')
+    routes = geographic_features.filter(feature_type='route')
     
     # Get upcoming events
     upcoming_events = Event.objects.filter(
@@ -107,13 +126,21 @@ def admin_dashboard_view(request):
     context = {
         'sos_last_hour': sos_last_hour,
         'lost_found_today': lost_found_today,
-        'overcrowded_zones_count': overcrowded_zones,
+        'overcrowded_zones_count': overcrowded_zones_count,
         'recent_sos': recent_sos,
         'overcrowded_zones_list': overcrowded_zones_list,
         'recent_lost_found': recent_lost_found,
-        'all_zones': all_zones,
         'all_sos': all_sos,
         'all_lost_found': all_lost_found,
+        'all_zones': all_zones,
+        'all_amenities': all_amenities,
+        'geographic_features': geographic_features,
+        'roads': roads,
+        'parking': parking,
+        'holding_areas': holding_areas,
+        'staging_areas': staging_areas,
+        'release_points': release_points,
+        'routes': routes,
         'toilets_count': toilets_count,
         'medical_count': medical_count,
         'help_desk_count': help_desk_count,

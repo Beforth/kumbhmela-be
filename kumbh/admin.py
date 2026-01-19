@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django import forms
-from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound, Event, SmtpSettings
+from .models import Zone, Amenity, SosRequest, FamilyMember, FamilyInvitation, LostFound, Event, SmtpSettings, GeographicFeature
 
 
 @admin.register(Zone)
@@ -176,3 +176,29 @@ class SmtpSettingsAdmin(admin.ModelAdmin):
         # Make password field use password input widget
         form.base_fields['password'].widget = forms.PasswordInput(attrs={'class': 'vTextField'})
         return form
+
+
+@admin.register(GeographicFeature)
+class GeographicFeatureAdmin(admin.ModelAdmin):
+    list_display = ('name', 'feature_type', 'geometry_type', 'kmz_file_name', 'is_active', 'updated_at')
+    list_filter = ('feature_type', 'geometry_type', 'kmz_file_name', 'is_active')
+    search_fields = ('name', 'description', 'kmz_file_name')
+    ordering = ('feature_type', 'name')
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'feature_type', 'geometry_type', 'kmz_file_name', 'description', 'is_active')
+        }),
+        ('Point Geometry', {
+            'fields': ('latitude', 'longitude'),
+            'description': 'For point geometry type'
+        }),
+        ('Line/Polygon Geometry', {
+            'fields': ('coordinates',),
+            'description': 'For line or polygon geometry. Format: [[lat1, lng1], [lat2, lng2], ...]'
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
