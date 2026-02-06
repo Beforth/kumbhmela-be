@@ -276,6 +276,13 @@
             <span class="nav-icon"><i class="ri-road-map-line"></i></span>
             <span>Crowding Zones</span>
           </a>
+          <a
+            href="{% url 'kumbh:admin_events' %}"
+            class="nav-item {% if request.resolver_match.url_name == 'admin_events' %}active{% endif %}"
+          >
+            <span class="nav-icon"><i class="ri-calendar-line"></i></span>
+            <span>Events</span>
+          </a>
         </nav>
       </div>
 
